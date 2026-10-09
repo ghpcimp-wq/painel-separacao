@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de Separação</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  color-scheme:light;
+  --plano:#f9f9f7; --sup:#fcfcfb; --tinta:#0b0b0b; --tinta2:#52514e; --muda:#898781;
+  --grade:#e1e0d9; --eixo:#c3c2b7; --borda:rgba(11,11,11,.10);
+  --atend:#2a78d6; --pend:#eb6834; --trilho:#f3dcd0;
+  --critico:#d03b3b; --bom:#006300; --alerta-fundo:#fdf1e3; --lavagem:rgba(11,11,11,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --plano:#0d0d0d; --sup:#1a1a19; --tinta:#fff; --tinta2:#c3c2b7; --muda:#898781;
+    --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+    --atend:#3987e5; --pend:#d95926; --trilho:#43261a;
+    --critico:#e66767; --bom:#0ca30c; --alerta-fundo:#2b2116; --lavagem:rgba(255,255,255,.05);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plano);color:var(--tinta);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.pagina{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+h1{font-size:22px;margin:0;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--tinta2);margin:2px 0 0}
+.seletor{display:flex;gap:6px;align-items:center}
+button,select,input{font:inherit;color:inherit}
+.seletor button,.seletor select,.busca,.chips button{background:var(--sup);border:1px solid var(--borda);border-radius:8px;padding:7px 10px}
+.seletor button{cursor:pointer;min-width:36px}
+.seletor button:disabled{opacity:.35;cursor:default}
+.seletor button:hover:not(:disabled),.chips button:hover{background:var(--lavagem)}
+.aviso{background:var(--alerta-fundo);border:1px solid var(--borda);border-radius:10px;padding:10px 14px;margin-bottom:14px}
+.aviso[hidden]{display:none}
+.conclusao{background:var(--sup);border:1px solid var(--borda);border-left:4px solid var(--pend);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:15px}
+.conclusao b{font-weight:650}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
+.cartao{min-width:0;background:var(--sup);border:1px solid var(--borda);border-radius:12px;padding:14px 16px}
+.kpi .rot{color:var(--tinta2);font-size:13px}
+.kpi .val{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:2px 0;line-height:1.15}
+.kpi.heroi .val{font-size:36px}
+.kpi .val{white-space:nowrap}
+.kpi .det{color:var(--tinta2);font-size:13px}
+.kpi .delta{font-size:12.5px;margin-top:6px;color:var(--tinta2)}
+.delta .ruim{color:var(--critico);font-weight:600}.delta .boa{color:var(--bom);font-weight:600}
+.medidor{height:8px;border-radius:4px;background:var(--trilho);margin-top:8px;overflow:hidden}
+.medidor i{display:block;height:100%;background:var(--atend);border-radius:4px 0 0 4px}
+.grade2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 2px;font-weight:650}
+.nota{color:var(--tinta2);font-size:12.5px;margin:0 0 12px}
+.legenda{display:flex;gap:14px;font-size:12.5px;color:var(--tinta2);margin-bottom:8px}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+/* colunas empilhadas */
+.graf{position:relative;height:190px;margin-left:54px;border-bottom:1px solid var(--eixo)}
+.graf .linha{position:absolute;left:0;right:0;border-top:1px solid var(--grade)}
+.graf .linha span{position:absolute;left:-54px;width:48px;text-align:right;white-space:nowrap;top:-8px;font-size:11px;color:var(--muda);font-variant-numeric:tabular-nums}
+.cols{position:absolute;inset:0;display:flex;align-items:flex-end}
+.col{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;min-width:0}
+.col.clic{cursor:pointer}
+.col:hover{background:var(--lavagem)}
+.col.sel{background:var(--lavagem)}
+.col .seg{width:min(24px,70%);min-height:0}
+.col .seg.p{background:var(--pend)}
+.col .seg.a{background:var(--atend)}
+.col .seg.topo{border-radius:4px 4px 0 0}
+.eixox{display:flex;margin-left:54px;margin-top:4px}
+.eixox span{flex:1;text-align:center;font-size:11px;color:var(--muda);white-space:nowrap;overflow:visible;min-width:0}
+/* barras horizontais */
+.barra-l{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;margin:12px 0}
+.barra-l .nome{font-weight:600}
+.barra-l .nome small{display:block;font-weight:400;color:var(--tinta2)}
+.faixa{display:flex;align-items:center;gap:8px}
+.faixa i{display:block;height:20px;background:var(--pend);border-radius:0 4px 4px 0;min-width:2px}
+.faixa span{white-space:nowrap;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--grade);white-space:nowrap}
+th{color:var(--tinta2);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--sup);cursor:default}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.rolagem{max-height:420px;overflow:auto;border-top:1px solid var(--grade)}
+.mini{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--trilho);vertical-align:middle;margin-right:6px;overflow:hidden}
+.mini i{display:block;height:100%;background:var(--pend)}
+.etq{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--borda);font-size:11.5px;color:var(--tinta2)}
+.etq.forte{border-color:var(--critico);color:var(--tinta)}
+.filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.chips{display:flex;gap:6px}
+.chips button{cursor:pointer;padding:5px 10px;border-radius:999px}
+.chips button[aria-pressed=true]{background:var(--tinta);color:var(--sup);border-color:var(--tinta)}
+.busca{flex:1;min-width:160px}
+.vazio{color:var(--tinta2);padding:18px 4px}
+#dica{position:fixed;pointer-events:none;background:var(--tinta);color:var(--sup);padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.4;z-index:9;display:none;white-space:nowrap}
+footer{color:var(--tinta2);font-size:12px;margin-top:18px}
+@media (max-width:560px){.kpi.heroi .val{font-size:34px}.barra-l{grid-template-columns:90px 1fr}}
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <div>
+      <h1>Painel de Separação</h1>
+      <p class="sub" id="sub">Carregando…</p>
+    </div>
+    <div class="seletor">
+      <button id="ant" aria-label="Dia anterior">‹</button>
+      <select id="dia" aria-label="Dia"></select>
+      <button id="prox" aria-label="Próximo dia">›</button>
+    </div>
+  </header>
+
+  <div class="aviso" id="aviso" hidden></div>
+  <div class="conclusao" id="conclusao" hidden></div>
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grade2">
+    <div class="cartao">
+      <h2>Pendência por classificação</h2>
+      <p class="nota">Valor dos itens pendentes: fabricados (referência terminada em #) ou SC.</p>
+      <div id="tipos"></div>
+    </div>
+    <div class="cartao">
+      <h2>Itens impressos por hora</h2>
+      <p class="nota">Carga de separação ao longo do dia e quanto dela ficou pendente.</p>
+      <div class="legenda"><span><i style="background:var(--atend)"></i>Atendido</span><span><i style="background:var(--pend)"></i>Pendente</span></div>
+      <div id="horas"></div>
+    </div>
+  </section>
+
+  <section class="grade2">
+    <div class="cartao">
+      <h2>Por tipo de operação (TOP)</h2>
+      <p class="nota">Onde a pendência se concentra.</p>
+      <div id="tops" style="overflow-x:auto"></div>
+    </div>
+    <div class="cartao">
+      <h2>Histórico diário (valor em R$)</h2>
+      <p class="nota" id="histnota">Clique em um dia para abrir.</p>
+      <div class="legenda"><span><i style="background:var(--atend)"></i>Atendido</span><span><i style="background:var(--pend)"></i>Pendente</span></div>
+      <div id="hist"></div>
+    </div>
+  </section>
+
+  <section class="cartao" style="margin-bottom:14px">
+    <h2>Pedidos com pendência</h2>
+    <p class="nota">Ordenados pelo valor parado. Pedido sem fatura parcial fica travado por inteiro até o último item.</p>
+    <div class="rolagem" id="pedidos"></div>
+  </section>
+
+  <section class="cartao">
+    <h2>Itens pendentes</h2>
+    <p class="nota">Reincidência = em quantos dias dos últimos 30 a mesma referência apareceu pendente.</p>
+    <div class="filtros">
+      <div class="chips" id="chips">
+        <button data-t="" aria-pressed="true">Todos</button>
+        <button data-t="FABRICADO" aria-pressed="false">Fabricado</button>
+        <button data-t="SC" aria-pressed="false">SC</button>
+      </div>
+      <input class="busca" id="busca" type="search" placeholder="Buscar referência, código ou pedido">
+    </div>
+    <div class="rolagem" id="itens"></div>
+  </section>
+
+  <footer>
+    Atendido = item com PENDENTE "N" no ERP; Pendente = PENDENTE "S". Valores líquidos (total − desconto).
+    Retrato do momento em que o ERP gerou o arquivo. <span id="fonte"></span>
+  </footer>
+</div>
+<div id="dica"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const fR = v => v.toLocaleString("pt-BR", {style:"currency", currency:"BRL", maximumFractionDigits:0});
+const fR2 = v => v.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+const fN = v => v.toLocaleString("pt-BR");
+const fP = v => (isFinite(v) ? v : 0).toLocaleString("pt-BR", {style:"percent", minimumFractionDigits:1, maximumFractionDigits:1});
+const fD = iso => iso.split("-").reverse().join("/");
+const fDc = iso => iso.slice(8) + "/" + iso.slice(5,7);
+const semana = iso => ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][new Date(iso + "T12:00:00").getDay()];
+const soma = (lista, f) => lista.reduce((s, x) => s + f(x), 0);
+
+/* cria elementos sempre com textContent: nada vindo da planilha vira HTML */
+function el(tag, attrs, ...filhos){
+  const e = document.createElement(tag);
+  for (const k in (attrs || {})){
+    if (k === "class") e.className = attrs[k];
+    else if (k === "style") e.style.cssText = attrs[k];
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]);
+    else e.setAttribute(k, attrs[k]);
+  }
+  for (const f of filhos) if (f !== null && f !== undefined) e.append(f.nodeType ? f : String(f));
+  return e;
+}
+function limpar(no){ while (no.firstChild) no.removeChild(no.firstChild); return no; }
+
+/* dica flutuante */
+const dica = $("dica");
+function comDica(no, linhas){
+  no.addEventListener("mousemove", ev => {
+    limpar(dica);
+    linhas().forEach((l, i) => dica.append(i ? el("br") : "", l));
+    dica.style.display = "block";
+    const x = Math.min(ev.clientX + 12, window.innerWidth - dica.offsetWidth - 8);
+    dica.style.left = x + "px"; dica.style.top = (ev.clientY + 14) + "px";
+  });
+  no.addEventListener("mouseleave", () => dica.style.display = "none");
+}
+
+function escala(max){
+  if (max <= 0) return {topo:1, passo:1};
+  const bruto = max / 4, pot = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const passo = [1,2,5,10].map(m => m * pot).find(p => p >= bruto);
+  return {topo: Math.ceil(max / passo) * passo, passo};
+}
+const compacto = v => v >= 1000 ? (v/1000).toLocaleString("pt-BR", {maximumFractionDigits:1}) + " mil" : fN(v);
+
+/* colunas empilhadas: cols = [{rot, a, p, dica:[...], sel, clique}] */
+function colunas(alvo, cols, fmt){
+  limpar(alvo);
+  const {topo, passo} = escala(Math.max(...cols.map(c => c.a + c.p), 0));
+  const graf = el("div", {class:"graf"});
+  for (let v = passo; v <= topo + 1e-9; v += passo)
+    graf.append(el("div", {class:"linha", style:`bottom:${v/topo*100}%`}, el("span", null, compacto(v))));
+  const caixa = el("div", {class:"cols"});
+  const pular = Math.ceil(cols.length / 12);
+  const eixo = el("div", {class:"eixox"});
+  cols.forEach((c, i) => {
+    const col = el("div", {class:"col" + (c.clique ? " clic" : "") + (c.sel ? " sel" : "")});
+    if (c.p > 0) col.append(el("div", {class:"seg p topo", style:`height:${c.p/topo*100}%`}));
+    if (c.a > 0) col.append(el("div", {class:"seg a" + (c.p > 0 ? "" : " topo"), style:`height:${c.a/topo*100}%`}));
+    comDica(col, () => c.dica);
+    if (c.clique) col.addEventListener("click", c.clique);
+    caixa.append(col);
+    eixo.append(el("span", null, i % pular === 0 ? c.rot : ""));
+  });
+  graf.append(caixa);
+  alvo.append(graf, eixo);
+}
+
+function tabela(alvo, cab, linhas, vazio){
+  limpar(alvo);
+  if (!linhas.length){ alvo.append(el("div", {class:"vazio"}, vazio)); return; }
+  const t = el("table");
+  t.append(el("thead", null, el("tr", null, ...cab.map(c => el("th", {class:c.n ? "n" : ""}, c.t)))));
+  const corpo = el("tbody");
+  linhas.forEach(l => corpo.append(el("tr", null, ...l.map((v, i) => el("td", {class:cab[i].n ? "n" : ""}, v)))));
+  t.append(corpo); alvo.append(t);
+}
+
+let resumo = [], atual = null, dados = null, filtroTipo = "", cache = {};
+
+function delta(valorHoje, valorAntes, rotulo, subirEhRuim){
+  if (valorAntes === null) return null;
+  const d = (valorHoje - valorAntes) * 100;
+  if (Math.abs(d) < 0.05) return el("div", {class:"delta"}, "Estável vs " + rotulo);
+  const ruim = (d > 0) === subirEhRuim;
+  return el("div", {class:"delta"},
+    el("span", {class: ruim ? "ruim" : "boa"}, (d > 0 ? "▲ +" : "▼ ") + d.toLocaleString("pt-BR", {maximumFractionDigits:1}) + " p.p."),
+    " vs " + rotulo + (ruim ? " (piora)" : " (melhora)"));
+}
+
+function kpi(rot, val, det, extra, heroi){
+  return el("div", {class:"cartao kpi" + (heroi ? " heroi" : "")},
+    el("div", {class:"rot"}, rot), el("div", {class:"val"}, val), el("div", {class:"det"}, det), extra || null);
+}
+
+function desenhar(){
+  const it = dados.itens, pend = it.filter(i => i.pend);
+  const vTot = soma(it, i => i.v), vPend = soma(pend, i => i.v);
+  const ped = new Map();
+  it.forEach(i => {
+    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, fab:0, sc:0});
+    const p = ped.get(i.nota);
+    p.n++; p.v += i.v; if (i.h < p.h) p.h = i.h;
+    if (i.pend){ p.np++; p.vp += i.v; i.tipo === "FABRICADO" ? p.fab++ : p.sc++; }
+  });
+  const pedidos = [...ped.values()], comPend = pedidos.filter(p => p.np > 0);
+  const travados = comPend.filter(p => !p.parc);
+  const vTrav = soma(travados, p => p.v);
+  const idx = resumo.findIndex(d => d.data === atual), antes = idx > 0 ? resumo[idx - 1] : null;
+  const rotAntes = antes ? fDc(antes.data) : "";
+
+  $("sub").textContent = `Impressões de separação de ${fD(atual)} (${semana(atual)}) · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
+  $("fonte").textContent = "Arquivo de origem: " + dados.arquivo + ".";
+
+  /* conclusao */
+  const porTipo = ["SC","FABRICADO"].map(t => ({t, itens:pend.filter(i => i.tipo === t)})).map(x => ({...x, v:soma(x.itens, i => i.v)}));
+  const maior = porTipo.slice().sort((a, b) => b.v - a.v)[0];
+  const c = limpar($("conclusao")); c.hidden = false;
+  if (!it.length) c.append("Nenhum item impresso para separação neste dia.");
+  else if (!pend.length) c.append(el("b", null, "Dia 100% atendido: "), `${fR(vTot)} em ${fN(pedidos.length)} pedidos, sem pendência.`);
+  else {
+    c.append(el("b", null, `${fR(vPend)} ficaram pendentes`), ` — ${fP(vPend / vTot)} do valor enviado para separação. `);
+    c.append(`${maior.t === "SC" ? "Itens SC" : "Itens fabricados"} respondem por ${fP(maior.v / vPend)} da pendência. `);
+    if (travados.length) c.append(el("b", null, `${fN(travados.length)} pedidos sem fatura parcial`), ` seguram ${fR(vTrav)} até o último item ser atendido.`);
+  }
+
+  /* kpis */
+  const k = limpar($("kpis"));
+  const medidor = f => el("div", {class:"medidor"}, el("i", {style:`width:${f*100}%`}));
+  k.append(
+    kpi("Valor pendente", fR(vPend), `${fP(vTot ? vPend / vTot : 0)} do valor · ${fN(pend.length)} itens`,
+        antes && antes.valor ? delta(vTot ? vPend / vTot : 0, antes.valor_pend / antes.valor, rotAntes, true) : null, true),
+    kpi("Valor enviado para separação", fR(vTot), `${fN(it.length)} itens · ${fN(pedidos.length)} pedidos`),
+    kpi("Itens atendidos", fP(it.length ? 1 - pend.length / it.length : 0), `${fN(it.length - pend.length)} de ${fN(it.length)} itens`,
+        el("div", null, medidor(it.length ? 1 - pend.length / it.length : 0),
+           antes && antes.itens ? delta(it.length ? 1 - pend.length / it.length : 0, 1 - antes.itens_pend / antes.itens, rotAntes, false) : null)),
+    kpi("Pedidos completos", fP(pedidos.length ? 1 - comPend.length / pedidos.length : 0), `${fN(pedidos.length - comPend.length)} de ${fN(pedidos.length)} pedidos`,
+        medidor(pedidos.length ? 1 - comPend.length / pedidos.length : 0)),
+    kpi("Travados por inteiro", fR(vTrav), `${fN(travados.length)} pedidos sem fatura parcial com pendência`)
+  );
+
+  /* classificacao */
+  const tp = limpar($("tipos"));
+  if (!pend.length) tp.append(el("div", {class:"vazio"}, "Sem pendências neste dia."));
+  const maxT = Math.max(...porTipo.map(x => x.v), 1);
+  porTipo.filter(() => pend.length).forEach(x => {
+    const linha = el("div", {class:"barra-l"},
+      el("div", {class:"nome"}, x.t === "SC" ? "SC" : "Fabricado", el("small", null, `${fN(x.itens.length)} itens · ${fN(new Set(x.itens.map(i => i.nota)).size)} pedidos`)),
+      el("div", {class:"faixa"}, el("i", {style:`width:${x.v / maxT * 70}%`}), el("span", null, `${fR(x.v)} · ${fP(x.v / vPend)}`)));
+    comDica(linha, () => [x.t, `${fR2(x.v)} em ${fN(x.itens.length)} itens`]);
+    tp.append(linha);
+  });
+
+  /* horas */
+  const hs = {};
+  it.forEach(i => { const h = i.h.slice(0, 2); hs[h] = hs[h] || {a:0, p:0, v:0}; i.pend ? hs[h].p++ : hs[h].a++; hs[h].v += i.v; });
+  const chaves = Object.keys(hs).sort();
+  const faixa = [];
+  if (chaves.length) for (let h = +chaves[0]; h <= +chaves[chaves.length - 1]; h++) faixa.push(String(h).padStart(2, "0"));
+  if (faixa.length) colunas($("horas"), faixa.map(h => {
+    const x = hs[h] || {a:0, p:0, v:0};
+    return {rot:h + "h", a:x.a, p:x.p, dica:[`${h}h–${h}h59`, `${fN(x.a + x.p)} itens · ${fR(x.v)}`, `Atendidos: ${fN(x.a)}`, `Pendentes: ${fN(x.p)}`]};
+  }));
+  else limpar($("horas")).append(el("div", {class:"vazio"}, "Sem itens neste dia."));
+
+  /* TOP */
+  const tops = {};
+  it.forEach(i => { const t = tops[i.top] = tops[i.top] || {top:i.top, n:0, np:0, v:0, vp:0}; t.n++; t.v += i.v; if (i.pend){ t.np++; t.vp += i.v; } });
+  tabela($("tops"),
+    [{t:"TOP"}, {t:"Itens", n:1}, {t:"Valor", n:1}, {t:"Valor pendente", n:1}, {t:"% do valor pendente"}],
+    Object.values(tops).sort((a, b) => b.vp - a.vp || b.v - a.v).map(t => [
+      String(t.top), fN(t.n), fR(t.v), fR(t.vp),
+      el("span", null, el("span", {class:"mini"}, el("i", {style:`width:${t.v ? t.vp / t.v * 100 : 0}%`})), fP(t.v ? t.vp / t.v : 0))]),
+    "Sem itens neste dia.");
+
+  /* historico */
+  const ult = resumo.slice(-30);
+  $("histnota").textContent = resumo.length > 1
+    ? `Últimos ${ult.length} dias com arquivo. Clique em um dia para abrir.`
+    : "O histórico cresce a cada arquivo diário recebido.";
+  colunas($("hist"), ult.map(d => ({
+    rot: fDc(d.data), a: d.valor - d.valor_pend, p: d.valor_pend, sel: d.data === atual,
+    clique: () => abrir(d.data),
+    dica: [`${fD(d.data)} (${semana(d.data)})`, `Enviado: ${fR(d.valor)}`, `Pendente: ${fR(d.valor_pend)} (${fP(d.valor ? d.valor_pend / d.valor : 0)})`, `${fN(d.itens_pend)} de ${fN(d.itens)} itens pendentes`]
+  })));
+
+  /* pedidos */
+  tabela($("pedidos"),
+    [{t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Valor do pedido", n:1}, {t:"Classificação"}],
+    comPend.sort((a, b) => b.vp - a.vp).map(p => [
+      String(p.nota), String(p.top), p.h.slice(0, 5),
+      p.parc ? el("span", {class:"etq"}, "Sim") : el("span", {class:"etq forte"}, "Não · travado"),
+      `${fN(p.np)} de ${fN(p.n)}`, fR2(p.vp), fR2(p.v),
+      [p.fab ? `${p.fab} fabricado${p.fab > 1 ? "s" : ""}` : "", p.sc ? `${p.sc} SC` : ""].filter(Boolean).join(" · ")]),
+    "Nenhum pedido com pendência neste dia.");
+
+  desenharItens();
+}
+
+function desenharItens(){
+  const termo = $("busca").value.trim().toUpperCase();
+  const lista = dados.itens.filter(i => i.pend)
+    .filter(i => !filtroTipo || i.tipo === filtroTipo)
+    .filter(i => !termo || (i.ref + " " + i.cod + " " + i.nota).toUpperCase().includes(termo))
+    .sort((a, b) => b.v - a.v);
+  tabela($("itens"),
+    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Classificação"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Valor", n:1}, {t:"Reincidência (30 dias)"}],
+    lista.map(i => {
+      const r = (dados.reinc || {})[i.ref] || 1;
+      return [i.ref, String(i.cod), i.tipo === "FABRICADO" ? "Fabricado" : i.tipo, String(i.nota), i.parc ? "Sim" : "Não", fR2(i.v),
+        r > 1 ? el("span", {class:"etq forte"}, `${r} dias`) : el("span", {class:"etq"}, "1º dia")];
+    }),
+    "Nenhum item pendente para este filtro.");
+}
+
+async function abrir(dia){
+  atual = dia;
+  $("dia").value = dia;
+  const i = resumo.findIndex(d => d.data === dia);
+  $("ant").disabled = i <= 0; $("prox").disabled = i >= resumo.length - 1;
+  try{
+    if (!cache[dia]){
+      const r = await fetch(`dados/json/${dia}.json`, {cache:"no-cache"});
+      if (!r.ok) throw new Error(r.status);
+      cache[dia] = await r.json();
+    }
+    dados = cache[dia];
+    if (atual === dia) desenhar();
+  }catch(e){ erro(`Não foi possível carregar os dados de ${fD(dia)}.`); }
+}
+
+function erro(msg){ const a = $("aviso"); a.hidden = false; a.textContent = msg; }
+
+async function iniciar(){
+  try{
+    const r = await fetch("dados/resumo.json", {cache:"no-cache"});
+    if (!r.ok) throw new Error(r.status);
+    resumo = (await r.json()).dias || [];
+  }catch(e){
+    $("sub").textContent = "";
+    return erro("Não foi possível carregar dados/resumo.json. O painel precisa ser aberto pelo endereço do GitHub Pages (ou por um servidor local), não como arquivo solto.");
+  }
+  if (!resumo.length){ $("sub").textContent = ""; return erro("Ainda não há nenhum arquivo de separação processado."); }
+  const sel = $("dia");
+  resumo.slice().reverse().forEach(d => sel.append(el("option", {value:d.data}, `${fD(d.data)} · ${semana(d.data)}`)));
+  sel.addEventListener("change", () => abrir(sel.value));
+  const passo = n => { const i = resumo.findIndex(d => d.data === atual) + n; if (resumo[i]) abrir(resumo[i].data); };
+  $("ant").addEventListener("click", () => passo(-1));
+  $("prox").addEventListener("click", () => passo(1));
+  $("busca").addEventListener("input", desenharItens);
+  $("chips").addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if (!b) return;
+    filtroTipo = b.dataset.t;
+    [...$("chips").children].forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    desenharItens();
+  });
+  const ultimo = resumo[resumo.length - 1].data;
+  const atraso = Math.floor((Date.now() - new Date(ultimo + "T12:00:00")) / 864e5);
+  if (atraso >= 4) erro(`Atenção: o último arquivo recebido é de ${fD(ultimo)} (${atraso} dias atrás). Verifique o envio do ERP e a rotina de atualização.`);
+  const pedido = new URLSearchParams(location.search).get("dia");
+  abrir(resumo.some(d => d.data === pedido) ? pedido : ultimo);
+}
+iniciar();
+</script>
+</body>
+</html>
