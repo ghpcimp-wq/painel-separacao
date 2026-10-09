@@ -8,6 +8,14 @@ Painel em HTML (GitHub Pages) alimentado pelo XLSX diário que o ERP envia por e
 2. Um **Google Apps Script** nessa conta roda de hora em hora, localiza os e-mails novos e grava cada anexo no repositório, em `dados/xlsx/`, com a data no nome (`2026-10-08_SEPARACAO.xlsx`). Nada é sobrescrito nem apagado: esse é o histórico.
 3. A chegada do arquivo dispara o fluxo **Publicar painel** (GitHub Actions), que recalcula os indicadores de todo o histórico e publica o painel.
 
+## Layout do arquivo
+
+O painel lê as colunas pela posição, na ordem do relatório `relatorio_impressao_separacao.jrxml`:
+data/hora da impressão, data, CODTIPOPER, NUNOTA, fatura parcial, CODPROD, REFERENCIA, QTDNEG, QTDESTOQUE, valor de venda do item, PENDENTE e STATUS.
+Se a ordem das colunas mudar no relatório, `scripts/gerar_dados.py` e `index.html` precisam ser ajustados juntos.
+
+Arquivos no layout antigo (10 colunas, sem estoque e status) continuam guardados em `dados/xlsx/`, mas são ignorados pelo painel.
+
 ## Configuração (uma única vez)
 
 ### GitHub

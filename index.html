@@ -11,16 +11,16 @@
   color-scheme:light;
   --plano:#f9f9f7; --sup:#fcfcfb; --tinta:#0b0b0b; --tinta2:#52514e; --muda:#898781;
   --grade:#e1e0d9; --eixo:#c3c2b7; --borda:rgba(11,11,11,.10);
-  --atend:#2a78d6; --pend:#eb6834; --trilho:#f3dcd0;
-  --critico:#d03b3b; --bom:#006300; --alerta-fundo:#fdf1e3; --lavagem:rgba(11,11,11,.04);
+  --atend:#2a78d6; --estq:#eb6834; --falta:#4a3aa7;
+  --trilho:#e9e8e3; --critico:#d03b3b; --bom:#006300; --alerta-fundo:#fdf1e3; --lavagem:rgba(11,11,11,.04);
 }
 @media (prefers-color-scheme:dark){
   :root{
     color-scheme:dark;
     --plano:#0d0d0d; --sup:#1a1a19; --tinta:#fff; --tinta2:#c3c2b7; --muda:#898781;
     --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
-    --atend:#3987e5; --pend:#d95926; --trilho:#43261a;
-    --critico:#e66767; --bom:#0ca30c; --alerta-fundo:#2b2116; --lavagem:rgba(255,255,255,.05);
+    --atend:#3987e5; --estq:#d95926; --falta:#9085e9;
+    --trilho:#2c2c2a; --critico:#e66767; --bom:#0ca30c; --alerta-fundo:#2b2116; --lavagem:rgba(255,255,255,.05);
   }
 }
 *{box-sizing:border-box}
@@ -37,64 +37,65 @@ button,select,input{font:inherit;color:inherit}
 .seletor button:hover:not(:disabled),.chips button:hover{background:var(--lavagem)}
 .aviso{background:var(--alerta-fundo);border:1px solid var(--borda);border-radius:10px;padding:10px 14px;margin-bottom:14px}
 .aviso[hidden]{display:none}
-.conclusao{background:var(--sup);border:1px solid var(--borda);border-left:4px solid var(--pend);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:15px}
+.conclusao{background:var(--sup);border:1px solid var(--borda);border-left:4px solid var(--estq);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:15px}
 .conclusao b{font-weight:650}
+.conclusao .obs{display:block;margin-top:6px;font-size:13px;color:var(--tinta2)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
 .cartao{min-width:0;background:var(--sup);border:1px solid var(--borda);border-radius:12px;padding:14px 16px}
 .kpi .rot{color:var(--tinta2);font-size:13px}
-.kpi .val{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:2px 0;line-height:1.15}
+.kpi .rot i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.kpi .val{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:2px 0;line-height:1.15;white-space:nowrap}
 .kpi.heroi .val{font-size:36px}
-.kpi .val{white-space:nowrap}
 .kpi .det{color:var(--tinta2);font-size:13px}
+.kpi .acao{font-size:12.5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--grade)}
 .kpi .delta{font-size:12.5px;margin-top:6px;color:var(--tinta2)}
 .delta .ruim{color:var(--critico);font-weight:600}.delta .boa{color:var(--bom);font-weight:600}
 .medidor{height:8px;border-radius:4px;background:var(--trilho);margin-top:8px;overflow:hidden}
-.medidor i{display:block;height:100%;background:var(--atend);border-radius:4px 0 0 4px}
+.medidor i{display:block;height:100%;border-radius:4px 0 0 4px}
+h3{font-size:13px;font-weight:650;color:var(--tinta2);margin:4px 0 8px;text-transform:uppercase;letter-spacing:.04em}
 .grade2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;margin-bottom:14px}
 h2{font-size:15px;margin:0 0 2px;font-weight:650}
 .nota{color:var(--tinta2);font-size:12.5px;margin:0 0 12px}
-.legenda{display:flex;gap:14px;font-size:12.5px;color:var(--tinta2);margin-bottom:8px}
+.legenda{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--tinta2);margin-bottom:8px}
 .legenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-/* colunas empilhadas */
+.c-a{background:var(--atend)}.c-e{background:var(--estq)}.c-f{background:var(--falta)}
 .graf{position:relative;height:190px;margin-left:54px;border-bottom:1px solid var(--eixo)}
 .graf .linha{position:absolute;left:0;right:0;border-top:1px solid var(--grade)}
 .graf .linha span{position:absolute;left:-54px;width:48px;text-align:right;white-space:nowrap;top:-8px;font-size:11px;color:var(--muda);font-variant-numeric:tabular-nums}
 .cols{position:absolute;inset:0;display:flex;align-items:flex-end}
 .col{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;min-width:0}
 .col.clic{cursor:pointer}
-.col:hover{background:var(--lavagem)}
-.col.sel{background:var(--lavagem)}
+.col:hover,.col.sel{background:var(--lavagem)}
 .col .seg{width:min(24px,70%);min-height:0}
-.col .seg.p{background:var(--pend)}
-.col .seg.a{background:var(--atend)}
-.col .seg.topo{border-radius:4px 4px 0 0}
+.col .seg:first-child{border-radius:4px 4px 0 0}
 .eixox{display:flex;margin-left:54px;margin-top:4px}
-.eixox span{flex:1;text-align:center;font-size:11px;color:var(--muda);white-space:nowrap;overflow:visible;min-width:0}
-/* barras horizontais */
-.barra-l{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;margin:12px 0}
+.eixox span{flex:1;text-align:center;font-size:11px;color:var(--muda);white-space:nowrap;min-width:0}
+.barra-l{display:grid;grid-template-columns:170px 1fr;gap:10px;align-items:center;margin:12px 0}
 .barra-l .nome{font-weight:600}
 .barra-l .nome small{display:block;font-weight:400;color:var(--tinta2)}
 .faixa{display:flex;align-items:center;gap:8px}
-.faixa i{display:block;height:20px;background:var(--pend);border-radius:0 4px 4px 0;min-width:2px}
+.faixa i{display:block;height:20px;border-radius:0 4px 4px 0;min-width:2px}
 .faixa span{white-space:nowrap;font-variant-numeric:tabular-nums}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--grade);white-space:nowrap}
-th{color:var(--tinta2);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--sup);cursor:default}
+th{color:var(--tinta2);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--sup)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
-.rolagem{max-height:420px;overflow:auto;border-top:1px solid var(--grade)}
+.rolagem{max-height:440px;overflow:auto;border-top:1px solid var(--grade)}
 .mini{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--trilho);vertical-align:middle;margin-right:6px;overflow:hidden}
-.mini i{display:block;height:100%;background:var(--pend)}
+.mini i{display:block;height:100%;background:var(--estq)}
 .etq{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--borda);font-size:11.5px;color:var(--tinta2)}
 .etq.forte{border-color:var(--critico);color:var(--tinta)}
+.etq i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
 .filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-.chips{display:flex;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips button{cursor:pointer;padding:5px 10px;border-radius:999px}
 .chips button[aria-pressed=true]{background:var(--tinta);color:var(--sup);border-color:var(--tinta)}
 .busca{flex:1;min-width:160px}
 .vazio{color:var(--tinta2);padding:18px 4px}
+.secao{margin-bottom:14px}
 #dica{position:fixed;pointer-events:none;background:var(--tinta);color:var(--sup);padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.4;z-index:9;display:none;white-space:nowrap}
-footer{color:var(--tinta2);font-size:12px;margin-top:18px}
-@media (max-width:560px){.kpi.heroi .val{font-size:34px}.barra-l{grid-template-columns:90px 1fr}}
+footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
+@media (max-width:560px){.kpi.heroi .val{font-size:34px}.barra-l{grid-template-columns:120px 1fr}}
 </style>
 </head>
 <body>
@@ -113,18 +114,22 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px}
 
   <div class="aviso" id="aviso" hidden></div>
   <div class="conclusao" id="conclusao" hidden></div>
+
   <section class="kpis" id="kpis"></section>
+  <h3>Onde está o valor pendente e quem resolve</h3>
+  <section class="kpis" id="decomp"></section>
 
   <section class="grade2">
     <div class="cartao">
-      <h2>Pendência por classificação</h2>
-      <p class="nota">Valor dos itens pendentes: fabricados (referência terminada em #) ou SC.</p>
-      <div id="tipos"></div>
+      <h2>Pendência por status</h2>
+      <p class="nota">Valor dos itens pendentes em cada status do ERP.</p>
+      <div class="legenda"><span><i class="c-e"></i>Pendente com estoque</span><span><i class="c-f"></i>Pendente sem estoque</span></div>
+      <div id="status"></div>
     </div>
     <div class="cartao">
       <h2>Itens impressos por hora</h2>
-      <p class="nota">Carga de separação ao longo do dia e quanto dela ficou pendente.</p>
-      <div class="legenda"><span><i style="background:var(--atend)"></i>Atendido</span><span><i style="background:var(--pend)"></i>Pendente</span></div>
+      <p class="nota">Carga de separação ao longo do dia e o que ficou pendente.</p>
+      <div class="legenda"><span><i class="c-a"></i>Atendido</span><span><i class="c-e"></i>Pendente com estoque</span><span><i class="c-f"></i>Pendente sem estoque</span></div>
       <div id="horas"></div>
     </div>
   </section>
@@ -138,34 +143,40 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px}
     <div class="cartao">
       <h2>Histórico diário (valor em R$)</h2>
       <p class="nota" id="histnota">Clique em um dia para abrir.</p>
-      <div class="legenda"><span><i style="background:var(--atend)"></i>Atendido</span><span><i style="background:var(--pend)"></i>Pendente</span></div>
+      <div class="legenda"><span><i class="c-a"></i>Atendido</span><span><i class="c-e"></i>Pendente com estoque</span><span><i class="c-f"></i>Pendente sem estoque</span></div>
       <div id="hist"></div>
     </div>
   </section>
 
-  <section class="cartao" style="margin-bottom:14px">
+  <section class="cartao secao">
+    <h2>Faltas por produto — prioridade para compras e produção</h2>
+    <p class="nota">“Destrava sozinho” = valor pendente liberado ao resolver apenas este produto (pedidos em que ele é a única falta). Reincidência = dias em falta nos últimos 30.</p>
+    <div class="rolagem" id="faltas"></div>
+  </section>
+
+  <section class="cartao secao">
     <h2>Pedidos com pendência</h2>
-    <p class="nota">Ordenados pelo valor parado. Pedido sem fatura parcial fica travado por inteiro até o último item.</p>
+    <p class="nota">Ordenados pelo valor pendente. “Liberável” é a parte que já tem estoque e pode ser faturada.</p>
+    <div class="filtros"><div class="chips" id="chipsPed"></div></div>
     <div class="rolagem" id="pedidos"></div>
   </section>
 
   <section class="cartao">
     <h2>Itens pendentes</h2>
-    <p class="nota">Reincidência = em quantos dias dos últimos 30 a mesma referência apareceu pendente.</p>
+    <p class="nota">“Disputado” = a soma pedida nos pendentes do dia é maior que o estoque do produto.</p>
     <div class="filtros">
-      <div class="chips" id="chips">
-        <button data-t="" aria-pressed="true">Todos</button>
-        <button data-t="FABRICADO" aria-pressed="false">Fabricado</button>
-        <button data-t="SC" aria-pressed="false">SC</button>
-      </div>
+      <div class="chips" id="chipsItens"></div>
       <input class="busca" id="busca" type="search" placeholder="Buscar referência, código ou pedido">
     </div>
     <div class="rolagem" id="itens"></div>
   </section>
 
   <footer>
-    Atendido = item com PENDENTE "N" no ERP; Pendente = PENDENTE "S". Valores líquidos (total − desconto).
-    Retrato do momento em que o ERP gerou o arquivo. <span id="fonte"></span>
+    <b>Status do ERP:</b> Atendido = PENDENTE “N”. Fora do prazo = pendente, com estoque, pedido aceita fatura parcial.
+    Aguardando outros itens = pendente, com estoque, pedido sem fatura parcial. Fabricado = pendente, sem estoque, referência terminada em #.
+    SC = pendente, sem estoque, demais referências.<br>
+    Estoque e pendência são o retrato do momento em que o ERP gerou o arquivo; o estoque é o total do produto, sem descontar reservas de outros pedidos.
+    Valores de venda líquidos (total − desconto). <span id="fonte"></span>
   </footer>
 </div>
 <div id="dica"></div>
@@ -175,12 +186,25 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px}
 const $ = id => document.getElementById(id);
 const fR = v => v.toLocaleString("pt-BR", {style:"currency", currency:"BRL", maximumFractionDigits:0});
 const fR2 = v => v.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
-const fN = v => v.toLocaleString("pt-BR");
+const fN = v => v.toLocaleString("pt-BR", {maximumFractionDigits:3});
 const fP = v => (isFinite(v) ? v : 0).toLocaleString("pt-BR", {style:"percent", minimumFractionDigits:1, maximumFractionDigits:1});
 const fD = iso => iso.split("-").reverse().join("/");
 const fDc = iso => iso.slice(8) + "/" + iso.slice(5,7);
 const semana = iso => ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][new Date(iso + "T12:00:00").getDay()];
 const soma = (lista, f) => lista.reduce((s, x) => s + f(x), 0);
+const pl = (n, s, p) => `${fN(n)} ${n === 1 ? s : p}`;
+
+const NOME = {"ATENDIDO":"Atendido", "FORA DO PRAZO":"Fora do prazo", "AGUARDANDO OUTROS ITENS":"Aguardando outros itens",
+              "FABRICADO":"Fabricado", "SC":"SC", "SEM CLASSIFICAÇÃO":"Sem classificação"};
+const ORDEM = ["FORA DO PRAZO", "AGUARDANDO OUTROS ITENS", "FABRICADO", "SC", "SEM CLASSIFICAÇÃO"];
+const nomeSt = s => NOME[s] || s;
+/* a = atendido | e = pendente com estoque | f = pendente sem estoque */
+function grupo(i){
+  if (!i.pend) return "a";
+  if (i.st === "FABRICADO" || i.st === "SC") return "f";
+  if (i.st === "FORA DO PRAZO" || i.st === "AGUARDANDO OUTROS ITENS") return "e";
+  return i.e >= i.q ? "e" : "f";
+}
 
 /* cria elementos sempre com textContent: nada vindo da planilha vira HTML */
 function el(tag, attrs, ...filhos){
@@ -188,23 +212,21 @@ function el(tag, attrs, ...filhos){
   for (const k in (attrs || {})){
     if (k === "class") e.className = attrs[k];
     else if (k === "style") e.style.cssText = attrs[k];
-    else if (k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]);
     else e.setAttribute(k, attrs[k]);
   }
-  for (const f of filhos) if (f !== null && f !== undefined) e.append(f.nodeType ? f : String(f));
+  for (const f of filhos) if (f !== null && f !== undefined && f !== "") e.append(f.nodeType ? f : String(f));
   return e;
 }
 function limpar(no){ while (no.firstChild) no.removeChild(no.firstChild); return no; }
 
-/* dica flutuante */
 const dica = $("dica");
 function comDica(no, linhas){
   no.addEventListener("mousemove", ev => {
     limpar(dica);
-    linhas().forEach((l, i) => dica.append(i ? el("br") : "", l));
+    linhas().forEach((l, i) => { if (i) dica.append(el("br")); dica.append(l); });
     dica.style.display = "block";
-    const x = Math.min(ev.clientX + 12, window.innerWidth - dica.offsetWidth - 8);
-    dica.style.left = x + "px"; dica.style.top = (ev.clientY + 14) + "px";
+    dica.style.left = Math.min(ev.clientX + 12, window.innerWidth - dica.offsetWidth - 8) + "px";
+    dica.style.top = (ev.clientY + 14) + "px";
   });
   no.addEventListener("mouseleave", () => dica.style.display = "none");
 }
@@ -217,20 +239,18 @@ function escala(max){
 }
 const compacto = v => v >= 1000 ? (v/1000).toLocaleString("pt-BR", {maximumFractionDigits:1}) + " mil" : fN(v);
 
-/* colunas empilhadas: cols = [{rot, a, p, dica:[...], sel, clique}] */
-function colunas(alvo, cols, fmt){
+/* colunas empilhadas: cols = [{rot, a, e, f, dica:[...], sel, clique}] */
+function colunas(alvo, cols){
   limpar(alvo);
-  const {topo, passo} = escala(Math.max(...cols.map(c => c.a + c.p), 0));
+  const {topo, passo} = escala(Math.max(...cols.map(c => c.a + c.e + c.f), 0));
   const graf = el("div", {class:"graf"});
   for (let v = passo; v <= topo + 1e-9; v += passo)
     graf.append(el("div", {class:"linha", style:`bottom:${v/topo*100}%`}, el("span", null, compacto(v))));
-  const caixa = el("div", {class:"cols"});
+  const caixa = el("div", {class:"cols"}), eixo = el("div", {class:"eixox"});
   const pular = Math.ceil(cols.length / 12);
-  const eixo = el("div", {class:"eixox"});
   cols.forEach((c, i) => {
     const col = el("div", {class:"col" + (c.clique ? " clic" : "") + (c.sel ? " sel" : "")});
-    if (c.p > 0) col.append(el("div", {class:"seg p topo", style:`height:${c.p/topo*100}%`}));
-    if (c.a > 0) col.append(el("div", {class:"seg a" + (c.p > 0 ? "" : " topo"), style:`height:${c.a/topo*100}%`}));
+    ["f","e","a"].forEach(g => { if (c[g] > 0) col.append(el("div", {class:"seg c-" + g, style:`height:${c[g]/topo*100}%`})); });
     comDica(col, () => c.dica);
     if (c.clique) col.addEventListener("click", c.clique);
     caixa.append(col);
@@ -246,104 +266,171 @@ function tabela(alvo, cab, linhas, vazio){
   const t = el("table");
   t.append(el("thead", null, el("tr", null, ...cab.map(c => el("th", {class:c.n ? "n" : ""}, c.t)))));
   const corpo = el("tbody");
-  linhas.forEach(l => corpo.append(el("tr", null, ...l.map((v, i) => el("td", {class:cab[i].n ? "n" : ""}, v)))));
+  linhas.forEach(l => corpo.append(el("tr", null, ...l.map((v, i) => el("td", {class:cab[i].n ? "n" : ""}, v === "" ? "–" : v)))));
   t.append(corpo); alvo.append(t);
 }
 
-let resumo = [], atual = null, dados = null, filtroTipo = "", cache = {};
+function chips(alvo, opcoes, atual, aoMudar){
+  limpar(alvo);
+  opcoes.forEach(([valor, rotulo]) => {
+    const b = el("button", {"aria-pressed": String(valor === atual)}, rotulo);
+    b.addEventListener("click", () => aoMudar(valor));
+    alvo.append(b);
+  });
+}
 
-function delta(valorHoje, valorAntes, rotulo, subirEhRuim){
-  if (valorAntes === null) return null;
-  const d = (valorHoje - valorAntes) * 100;
+let resumo = [], atual = null, dados = null, cache = {}, visao = null, filtroSt = "", filtroPed = "";
+
+function delta(hoje, antes, rotulo, subirEhRuim){
+  const d = (hoje - antes) * 100;
   if (Math.abs(d) < 0.05) return el("div", {class:"delta"}, "Estável vs " + rotulo);
   const ruim = (d > 0) === subirEhRuim;
   return el("div", {class:"delta"},
     el("span", {class: ruim ? "ruim" : "boa"}, (d > 0 ? "▲ +" : "▼ ") + d.toLocaleString("pt-BR", {maximumFractionDigits:1}) + " p.p."),
     " vs " + rotulo + (ruim ? " (piora)" : " (melhora)"));
 }
-
-function kpi(rot, val, det, extra, heroi){
-  return el("div", {class:"cartao kpi" + (heroi ? " heroi" : "")},
-    el("div", {class:"rot"}, rot), el("div", {class:"val"}, val), el("div", {class:"det"}, det), extra || null);
+function kpi(rot, val, det, extra, classe, cor){
+  return el("div", {class:"cartao kpi " + (classe || "")},
+    el("div", {class:"rot"}, cor ? el("i", {class:"c-" + cor}) : null, rot),
+    el("div", {class:"val"}, val), el("div", {class:"det"}, det), extra || null);
 }
+const medidor = (f, cor) => el("div", {class:"medidor"}, el("i", {class:"c-" + cor, style:`width:${Math.max(0, Math.min(1, f))*100}%`}));
+const etqGrupo = (g, texto) => el("span", {class:"etq"}, el("i", {class:"c-" + g}), texto);
 
-function desenhar(){
-  const it = dados.itens, pend = it.filter(i => i.pend);
-  const vTot = soma(it, i => i.v), vPend = soma(pend, i => i.v);
+/* monta toda a leitura de negocio do dia */
+function analisar(it){
+  const pend = it.filter(i => i.pend);
   const ped = new Map();
   it.forEach(i => {
-    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, fab:0, sc:0});
-    const p = ped.get(i.nota);
+    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, ne:0, nf:0, ve:0, vf:0, faltas:new Set(), st:{}});
+    const p = ped.get(i.nota), g = grupo(i);
     p.n++; p.v += i.v; if (i.h < p.h) p.h = i.h;
-    if (i.pend){ p.np++; p.vp += i.v; i.tipo === "FABRICADO" ? p.fab++ : p.sc++; }
+    if (i.pend){
+      p.np++; p.vp += i.v; p.st[i.st] = (p.st[i.st] || 0) + 1;
+      if (g === "f"){ p.nf++; p.vf += i.v; p.faltas.add(i.cod); } else { p.ne++; p.ve += i.v; }
+    }
   });
-  const pedidos = [...ped.values()], comPend = pedidos.filter(p => p.np > 0);
-  const travados = comPend.filter(p => !p.parc);
-  const vTrav = soma(travados, p => p.v);
+  const pedidos = [...ped.values()];
+  pedidos.forEach(p => {
+    p.lib = 0; p.arr = 0;
+    if (!p.np) p.sit = "";
+    else if (!p.nf){ p.sit = "PRONTO"; p.lib = p.vp; }
+    else if (p.parc && p.ne){ p.sit = "PARCIAL"; p.lib = p.ve; }
+    else if (p.parc) p.sit = "FALTA";
+    else { p.sit = "TRAVADO"; p.arr = p.ve; }
+  });
+  const comPend = pedidos.filter(p => p.np);
+
+  /* faltas por produto */
+  const prod = new Map();
+  pend.filter(i => grupo(i) === "f").forEach(i => {
+    if (!prod.has(i.cod)) prod.set(i.cod, {cod:i.cod, ref:i.ref, st:i.st, q:0, e:i.e, v:0, notas:new Set(), destrava:0});
+    const x = prod.get(i.cod); x.q += i.q; x.v += i.v; x.notas.add(i.nota); x.e = Math.min(x.e, i.e);
+  });
+  comPend.forEach(p => {
+    if (p.faltas.size !== 1) return;
+    const x = prod.get([...p.faltas][0]);
+    if (x) x.destrava += p.parc ? p.vf : p.vp;
+  });
+
+  /* estoque disputado entre os pendentes "com estoque" do dia */
+  const dem = new Map();
+  pend.filter(i => grupo(i) === "e").forEach(i => {
+    const x = dem.get(i.cod) || {q:0, e:i.e, v:0}; x.q += i.q; x.v += i.v; x.e = Math.min(x.e, i.e); dem.set(i.cod, x);
+  });
+  const disputa = new Set([...dem].filter(([, x]) => x.q > x.e).map(([c]) => c));
+
+  return {it, pend, pedidos, comPend, prod:[...prod.values()], disputa,
+    vTot: soma(it, i => i.v), vPend: soma(pend, i => i.v),
+    vLib: soma(comPend, p => p.lib), vArr: soma(comPend, p => p.arr), vFalta: soma(comPend, p => p.vf),
+    vDisp: soma(pend.filter(i => grupo(i) === "e" && disputa.has(i.cod)), i => i.v)};
+}
+
+const SIT = {PRONTO:["e","Pronto para faturar"], PARCIAL:["e","Parcialmente liberável"], FALTA:["f","Aguardando falta"], TRAVADO:["f","Travado por falta"]};
+
+function desenhar(){
+  const A = visao = analisar(dados.itens);
+  const {it, pend, pedidos, comPend} = A;
   const idx = resumo.findIndex(d => d.data === atual), antes = idx > 0 ? resumo[idx - 1] : null;
   const rotAntes = antes ? fDc(antes.data) : "";
+  const prontos = comPend.filter(p => p.lib > 0), travados = comPend.filter(p => p.sit === "TRAVADO");
 
   $("sub").textContent = `Impressões de separação de ${fD(atual)} (${semana(atual)}) · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
   $("fonte").textContent = "Arquivo de origem: " + dados.arquivo + ".";
 
   /* conclusao */
-  const porTipo = ["SC","FABRICADO"].map(t => ({t, itens:pend.filter(i => i.tipo === t)})).map(x => ({...x, v:soma(x.itens, i => i.v)}));
-  const maior = porTipo.slice().sort((a, b) => b.v - a.v)[0];
   const c = limpar($("conclusao")); c.hidden = false;
   if (!it.length) c.append("Nenhum item impresso para separação neste dia.");
-  else if (!pend.length) c.append(el("b", null, "Dia 100% atendido: "), `${fR(vTot)} em ${fN(pedidos.length)} pedidos, sem pendência.`);
+  else if (!pend.length) c.append(el("b", null, "Dia 100% atendido: "), `${fR(A.vTot)} em ${pl(pedidos.length, "pedido", "pedidos")}, sem pendência.`);
   else {
-    c.append(el("b", null, `${fR(vPend)} ficaram pendentes`), ` — ${fP(vPend / vTot)} do valor enviado para separação. `);
-    c.append(`${maior.t === "SC" ? "Itens SC" : "Itens fabricados"} respondem por ${fP(maior.v / vPend)} da pendência. `);
-    if (travados.length) c.append(el("b", null, `${fN(travados.length)} pedidos sem fatura parcial`), ` seguram ${fR(vTrav)} até o último item ser atendido.`);
+    c.append(el("b", null, `${fR(A.vPend)} ficaram pendentes`), ` (${fP(A.vPend / A.vTot)} do valor enviado). `);
+    if (A.vLib > 0) c.append(el("b", null, `${fR(A.vLib)} já têm estoque`), ` e podem ser faturados em ${pl(prontos.length, "pedido", "pedidos")}. `);
+    if (A.vFalta > 0){
+      c.append(`${fR(A.vFalta)} estão sem estoque`);
+      if (A.vArr > 0) c.append(" e ", el("b", null, `seguram outros ${fR(A.vArr)}`), ` em itens disponíveis de ${pl(travados.length, "pedido", "pedidos")} sem fatura parcial`);
+      c.append(".");
+    }
+    if (A.disputa.size) c.append(el("span", {class:"obs"}, `Atenção: ${pl(A.disputa.size, "produto tem", "produtos têm")} estoque menor que a soma dos pedidos pendentes do dia (${fR(A.vDisp)}); parte do valor “com estoque” pode não ser atendida.`));
+    const semClasse = pend.filter(i => i.st === "SEM CLASSIFICAÇÃO").length;
+    if (semClasse) c.append(el("span", {class:"obs"}, `${pl(semClasse, "item pendente veio", "itens pendentes vieram")} sem status do ERP; foram classificados aqui pela comparação entre quantidade e estoque.`));
   }
 
-  /* kpis */
-  const k = limpar($("kpis"));
-  const medidor = f => el("div", {class:"medidor"}, el("i", {style:`width:${f*100}%`}));
-  k.append(
-    kpi("Valor pendente", fR(vPend), `${fP(vTot ? vPend / vTot : 0)} do valor · ${fN(pend.length)} itens`,
-        antes && antes.valor ? delta(vTot ? vPend / vTot : 0, antes.valor_pend / antes.valor, rotAntes, true) : null, true),
-    kpi("Valor enviado para separação", fR(vTot), `${fN(it.length)} itens · ${fN(pedidos.length)} pedidos`),
-    kpi("Itens atendidos", fP(it.length ? 1 - pend.length / it.length : 0), `${fN(it.length - pend.length)} de ${fN(it.length)} itens`,
-        el("div", null, medidor(it.length ? 1 - pend.length / it.length : 0),
-           antes && antes.itens ? delta(it.length ? 1 - pend.length / it.length : 0, 1 - antes.itens_pend / antes.itens, rotAntes, false) : null)),
-    kpi("Pedidos completos", fP(pedidos.length ? 1 - comPend.length / pedidos.length : 0), `${fN(pedidos.length - comPend.length)} de ${fN(pedidos.length)} pedidos`,
-        medidor(pedidos.length ? 1 - comPend.length / pedidos.length : 0)),
-    kpi("Travados por inteiro", fR(vTrav), `${fN(travados.length)} pedidos sem fatura parcial com pendência`)
+  /* kpis gerais */
+  const fItens = it.length ? 1 - pend.length / it.length : 0, fPed = pedidos.length ? 1 - comPend.length / pedidos.length : 0;
+  limpar($("kpis")).append(
+    kpi("Valor pendente", fR(A.vPend), `${fP(A.vTot ? A.vPend / A.vTot : 0)} do valor · ${pl(pend.length, "item", "itens")}`,
+        antes && antes.valor ? delta(A.vTot ? A.vPend / A.vTot : 0, antes.valor_pend / antes.valor, rotAntes, true) : null, "heroi"),
+    kpi("Valor enviado para separação", fR(A.vTot), `${pl(it.length, "item", "itens")} · ${pl(pedidos.length, "pedido", "pedidos")}`),
+    kpi("Itens atendidos", fP(fItens), `${fN(it.length - pend.length)} de ${fN(it.length)} itens`,
+        el("div", null, medidor(fItens, "a"), antes && antes.itens ? delta(fItens, 1 - antes.itens_pend / antes.itens, rotAntes, false) : null)),
+    kpi("Pedidos completos", fP(fPed), `${fN(pedidos.length - comPend.length)} de ${fN(pedidos.length)} pedidos`, medidor(fPed, "a"))
   );
 
-  /* classificacao */
-  const tp = limpar($("tipos"));
-  if (!pend.length) tp.append(el("div", {class:"vazio"}, "Sem pendências neste dia."));
-  const maxT = Math.max(...porTipo.map(x => x.v), 1);
-  porTipo.filter(() => pend.length).forEach(x => {
+  /* decomposicao do pendente */
+  const parte = v => A.vPend ? v / A.vPend : 0;
+  const acao = t => el("div", {class:"acao"}, el("b", null, "Ação: "), t);
+  const vFab = soma(pend.filter(i => grupo(i) === "f" && i.st === "FABRICADO"), i => i.v);
+  limpar($("decomp")).append(
+    kpi("Pronto para faturar", fR(A.vLib), `${fP(parte(A.vLib))} do pendente · ${pl(prontos.length, "pedido", "pedidos")}`,
+        el("div", null, medidor(parte(A.vLib), "e"), acao("expedição separar e faturar; não depende de compra nem de produção.")), "", "e"),
+    kpi("Retido por arrasto", fR(A.vArr), `${fP(parte(A.vArr))} do pendente · ${pl(travados.length, "pedido", "pedidos")} sem fatura parcial`,
+        el("div", null, medidor(parte(A.vArr), "e"), acao("resolver a falta do pedido ou negociar fatura parcial com o cliente.")), "", "e"),
+    kpi("Em falta de estoque", fR(A.vFalta), `${fP(parte(A.vFalta))} do pendente · fabricado ${fR(vFab)} · SC ${fR(A.vFalta - vFab)}`,
+        el("div", null, medidor(parte(A.vFalta), "f"), acao("produção (fabricados) e compras (SC), pela ordem da lista de faltas.")), "", "f")
+  );
+
+  /* status */
+  const st = limpar($("status"));
+  const porSt = ORDEM.map(s => ({s, itens:pend.filter(i => i.st === s)})).filter(x => x.itens.length).map(x => ({...x, v:soma(x.itens, i => i.v)}));
+  if (!porSt.length) st.append(el("div", {class:"vazio"}, "Sem pendências neste dia."));
+  const maxS = Math.max(...porSt.map(x => x.v), 1);
+  porSt.forEach(x => {
+    const g = grupo(x.itens[0]);
     const linha = el("div", {class:"barra-l"},
-      el("div", {class:"nome"}, x.t === "SC" ? "SC" : "Fabricado", el("small", null, `${fN(x.itens.length)} itens · ${fN(new Set(x.itens.map(i => i.nota)).size)} pedidos`)),
-      el("div", {class:"faixa"}, el("i", {style:`width:${x.v / maxT * 70}%`}), el("span", null, `${fR(x.v)} · ${fP(x.v / vPend)}`)));
-    comDica(linha, () => [x.t, `${fR2(x.v)} em ${fN(x.itens.length)} itens`]);
-    tp.append(linha);
+      el("div", {class:"nome"}, nomeSt(x.s), el("small", null, `${pl(x.itens.length, "item", "itens")} · ${pl(new Set(x.itens.map(i => i.nota)).size, "pedido", "pedidos")}`)),
+      el("div", {class:"faixa"}, el("i", {class:"c-" + g, style:`width:${x.v / maxS * 62}%`}), el("span", null, `${fR(x.v)} · ${fP(x.v / A.vPend)}`)));
+    comDica(linha, () => [nomeSt(x.s), `${fR2(x.v)} em ${pl(x.itens.length, "item", "itens")}`]);
+    st.append(linha);
   });
 
   /* horas */
   const hs = {};
-  it.forEach(i => { const h = i.h.slice(0, 2); hs[h] = hs[h] || {a:0, p:0, v:0}; i.pend ? hs[h].p++ : hs[h].a++; hs[h].v += i.v; });
-  const chaves = Object.keys(hs).sort();
-  const faixa = [];
+  it.forEach(i => { const h = i.h.slice(0, 2); hs[h] = hs[h] || {a:0, e:0, f:0, v:0}; hs[h][grupo(i)]++; hs[h].v += i.v; });
+  const chaves = Object.keys(hs).sort(), faixa = [];
   if (chaves.length) for (let h = +chaves[0]; h <= +chaves[chaves.length - 1]; h++) faixa.push(String(h).padStart(2, "0"));
   if (faixa.length) colunas($("horas"), faixa.map(h => {
-    const x = hs[h] || {a:0, p:0, v:0};
-    return {rot:h + "h", a:x.a, p:x.p, dica:[`${h}h–${h}h59`, `${fN(x.a + x.p)} itens · ${fR(x.v)}`, `Atendidos: ${fN(x.a)}`, `Pendentes: ${fN(x.p)}`]};
+    const x = hs[h] || {a:0, e:0, f:0, v:0};
+    return {rot:h + "h", a:x.a, e:x.e, f:x.f, dica:[`${h}h–${h}h59`, `${pl(x.a + x.e + x.f, "item", "itens")} · ${fR(x.v)}`, `Atendidos: ${fN(x.a)}`, `Pendentes com estoque: ${fN(x.e)}`, `Pendentes sem estoque: ${fN(x.f)}`]};
   }));
   else limpar($("horas")).append(el("div", {class:"vazio"}, "Sem itens neste dia."));
 
   /* TOP */
   const tops = {};
-  it.forEach(i => { const t = tops[i.top] = tops[i.top] || {top:i.top, n:0, np:0, v:0, vp:0}; t.n++; t.v += i.v; if (i.pend){ t.np++; t.vp += i.v; } });
+  it.forEach(i => { const t = tops[i.top] = tops[i.top] || {top:i.top, n:0, v:0, vp:0, ve:0}; t.n++; t.v += i.v; if (i.pend){ t.vp += i.v; if (grupo(i) === "e") t.ve += i.v; } });
   tabela($("tops"),
-    [{t:"TOP"}, {t:"Itens", n:1}, {t:"Valor", n:1}, {t:"Valor pendente", n:1}, {t:"% do valor pendente"}],
+    [{t:"TOP"}, {t:"Itens", n:1}, {t:"Valor", n:1}, {t:"Pendente", n:1}, {t:"Pendente c/ estoque", n:1}, {t:"% do valor pendente"}],
     Object.values(tops).sort((a, b) => b.vp - a.vp || b.v - a.v).map(t => [
-      String(t.top), fN(t.n), fR(t.v), fR(t.vp),
+      String(t.top), fN(t.n), fR(t.v), fR(t.vp), fR(t.ve),
       el("span", null, el("span", {class:"mini"}, el("i", {style:`width:${t.v ? t.vp / t.v * 100 : 0}%`})), fP(t.v ? t.vp / t.v : 0))]),
     "Sem itens neste dia.");
 
@@ -353,37 +440,57 @@ function desenhar(){
     ? `Últimos ${ult.length} dias com arquivo. Clique em um dia para abrir.`
     : "O histórico cresce a cada arquivo diário recebido.";
   colunas($("hist"), ult.map(d => ({
-    rot: fDc(d.data), a: d.valor - d.valor_pend, p: d.valor_pend, sel: d.data === atual,
+    rot: fDc(d.data), a: d.valor - d.valor_pend, e: d.valor_estoque || 0, f: d.valor_falta || 0, sel: d.data === atual,
     clique: () => abrir(d.data),
-    dica: [`${fD(d.data)} (${semana(d.data)})`, `Enviado: ${fR(d.valor)}`, `Pendente: ${fR(d.valor_pend)} (${fP(d.valor ? d.valor_pend / d.valor : 0)})`, `${fN(d.itens_pend)} de ${fN(d.itens)} itens pendentes`]
+    dica: [`${fD(d.data)} (${semana(d.data)})`, `Enviado: ${fR(d.valor)}`, `Pendente: ${fR(d.valor_pend)} (${fP(d.valor ? d.valor_pend / d.valor : 0)})`,
+           `Com estoque: ${fR(d.valor_estoque || 0)}`, `Sem estoque: ${fR(d.valor_falta || 0)}`]
   })));
 
-  /* pedidos */
-  tabela($("pedidos"),
-    [{t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Valor do pedido", n:1}, {t:"Classificação"}],
-    comPend.sort((a, b) => b.vp - a.vp).map(p => [
-      String(p.nota), String(p.top), p.h.slice(0, 5),
-      p.parc ? el("span", {class:"etq"}, "Sim") : el("span", {class:"etq forte"}, "Não · travado"),
-      `${fN(p.np)} de ${fN(p.n)}`, fR2(p.vp), fR2(p.v),
-      [p.fab ? `${p.fab} fabricado${p.fab > 1 ? "s" : ""}` : "", p.sc ? `${p.sc} SC` : ""].filter(Boolean).join(" · ")]),
-    "Nenhum pedido com pendência neste dia.");
+  /* faltas por produto */
+  tabela($("faltas"),
+    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedidos", n:1}, {t:"Qtd. pedida", n:1}, {t:"Estoque", n:1}, {t:"Falta", n:1}, {t:"Valor em falta", n:1}, {t:"Destrava sozinho", n:1}, {t:"Reincidência"}],
+    A.prod.sort((a, b) => b.destrava - a.destrava || b.v - a.v).map(x => {
+      const r = (dados.reinc || {})[x.ref] || 1;
+      return [x.ref, String(x.cod), nomeSt(x.st), fN(x.notas.size), fN(x.q),
+        x.e < 0 ? el("span", {class:"etq forte"}, fN(x.e)) : fN(x.e), fN(Math.max(0, x.q - Math.max(0, x.e))), fR2(x.v),
+        x.destrava ? fR2(x.destrava) : "", r > 1 ? el("span", {class:"etq forte"}, `${r} dias`) : el("span", {class:"etq"}, "1º dia")];
+    }),
+    "Nenhum item em falta de estoque neste dia.");
 
+  desenharPedidos();
   desenharItens();
 }
 
+function desenharPedidos(){
+  const cont = s => visao.comPend.filter(p => p.sit === s).length;
+  chips($("chipsPed"), [["", `Todos (${visao.comPend.length})`], ...Object.keys(SIT).filter(cont).map(s => [s, `${SIT[s][1]} (${cont(s)})`])], filtroPed,
+    v => { filtroPed = v; desenharPedidos(); });
+  tabela($("pedidos"),
+    [{t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Situação"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Liberável", n:1}, {t:"Composição"}],
+    visao.comPend.filter(p => !filtroPed || p.sit === filtroPed).sort((a, b) => b.vp - a.vp).map(p => [
+      String(p.nota), String(p.top), p.h.slice(0, 5), p.parc ? "Sim" : "Não",
+      etqGrupo(SIT[p.sit][0], SIT[p.sit][1]), `${fN(p.np)} de ${fN(p.n)}`, fR2(p.vp), p.lib ? fR2(p.lib) : "",
+      ORDEM.filter(s => p.st[s]).map(s => `${p.st[s]} ${s === "SC" ? "SC" : nomeSt(s).toLowerCase()}`).join(" · ")]),
+    "Nenhum pedido com pendência para este filtro.");
+}
+
 function desenharItens(){
+  const pend = visao.pend, cont = s => pend.filter(i => i.st === s).length;
+  chips($("chipsItens"), [["", `Todos (${pend.length})`], ...ORDEM.filter(cont).map(s => [s, `${nomeSt(s)} (${cont(s)})`])], filtroSt,
+    v => { filtroSt = v; desenharItens(); });
   const termo = $("busca").value.trim().toUpperCase();
-  const lista = dados.itens.filter(i => i.pend)
-    .filter(i => !filtroTipo || i.tipo === filtroTipo)
-    .filter(i => !termo || (i.ref + " " + i.cod + " " + i.nota).toUpperCase().includes(termo))
-    .sort((a, b) => b.v - a.v);
   tabela($("itens"),
-    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Classificação"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Valor", n:1}, {t:"Reincidência (30 dias)"}],
-    lista.map(i => {
-      const r = (dados.reinc || {})[i.ref] || 1;
-      return [i.ref, String(i.cod), i.tipo === "FABRICADO" ? "Fabricado" : i.tipo, String(i.nota), i.parc ? "Sim" : "Não", fR2(i.v),
-        r > 1 ? el("span", {class:"etq forte"}, `${r} dias`) : el("span", {class:"etq"}, "1º dia")];
-    }),
+    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Qtd.", n:1}, {t:"Estoque", n:1}, {t:"Valor", n:1}, {t:"Observação"}],
+    pend.filter(i => !filtroSt || i.st === filtroSt)
+        .filter(i => !termo || (i.ref + " " + i.cod + " " + i.nota).toUpperCase().includes(termo))
+        .sort((a, b) => b.v - a.v)
+        .map(i => {
+          const g = grupo(i);
+          const obs = g === "e" && visao.disputa.has(i.cod) ? el("span", {class:"etq forte"}, "Estoque disputado")
+                    : i.e < 0 ? el("span", {class:"etq forte"}, "Estoque negativo")
+                    : g === "f" && i.e > 0 ? el("span", {class:"etq"}, `Atende ${fN(i.e)} de ${fN(i.q)}`) : "";
+          return [i.ref, String(i.cod), etqGrupo(g, nomeSt(i.st)), String(i.nota), i.parc ? "Sim" : "Não", fN(i.q), fN(i.e), fR2(i.v), obs];
+        }),
     "Nenhum item pendente para este filtro.");
 }
 
@@ -399,7 +506,7 @@ async function abrir(dia){
       cache[dia] = await r.json();
     }
     dados = cache[dia];
-    if (atual === dia) desenhar();
+    if (atual === dia){ filtroSt = ""; filtroPed = ""; desenhar(); }
   }catch(e){ erro(`Não foi possível carregar os dados de ${fD(dia)}.`); }
 }
 
@@ -414,7 +521,7 @@ async function iniciar(){
     $("sub").textContent = "";
     return erro("Não foi possível carregar dados/resumo.json. O painel precisa ser aberto pelo endereço do GitHub Pages (ou por um servidor local), não como arquivo solto.");
   }
-  if (!resumo.length){ $("sub").textContent = ""; return erro("Ainda não há nenhum arquivo de separação processado."); }
+  if (!resumo.length){ $("sub").textContent = ""; return erro("Ainda não há nenhum arquivo de separação no layout novo (com estoque e status). O painel aparece assim que o primeiro arquivo chegar."); }
   const sel = $("dia");
   resumo.slice().reverse().forEach(d => sel.append(el("option", {value:d.data}, `${fD(d.data)} · ${semana(d.data)}`)));
   sel.addEventListener("change", () => abrir(sel.value));
@@ -422,12 +529,6 @@ async function iniciar(){
   $("ant").addEventListener("click", () => passo(-1));
   $("prox").addEventListener("click", () => passo(1));
   $("busca").addEventListener("input", desenharItens);
-  $("chips").addEventListener("click", ev => {
-    const b = ev.target.closest("button"); if (!b) return;
-    filtroTipo = b.dataset.t;
-    [...$("chips").children].forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-    desenharItens();
-  });
   const ultimo = resumo[resumo.length - 1].data;
   const atraso = Math.floor((Date.now() - new Date(ultimo + "T12:00:00")) / 864e5);
   if (atraso >= 4) erro(`Atenção: o último arquivo recebido é de ${fD(ultimo)} (${atraso} dias atrás). Verifique o envio do ERP e a rotina de atualização.`);
