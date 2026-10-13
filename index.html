@@ -29,9 +29,11 @@ body{margin:0;background:var(--plano);color:var(--tinta);font:14px/1.45 system-u
 header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
 h1{font-size:22px;margin:0;font-weight:650;letter-spacing:-.01em}
 .sub{color:var(--tinta2);margin:2px 0 0}
-.seletor{display:flex;gap:6px;align-items:center}
+.periodo{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.seletor{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seletor label{color:var(--tinta2);font-size:13px;white-space:nowrap}
 button,select,input{font:inherit;color:inherit}
-.seletor button,.seletor select,.busca,.chips button{background:var(--sup);border:1px solid var(--borda);border-radius:8px;padding:7px 10px}
+.seletor button,.seletor input,.busca,.chips button{background:var(--sup);border:1px solid var(--borda);border-radius:8px;padding:7px 10px}
 .seletor button{cursor:pointer;min-width:36px}
 .seletor button:disabled{opacity:.35;cursor:default}
 .seletor button:hover:not(:disabled),.chips button:hover{background:var(--lavagem)}
@@ -95,6 +97,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .secao{margin-bottom:14px}
 #dica{position:fixed;pointer-events:none;background:var(--tinta);color:var(--sup);padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.4;z-index:9;display:none;white-space:nowrap}
 footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
+@media (max-width:700px){.periodo{align-items:flex-start}}
 @media (max-width:560px){.kpi.heroi .val{font-size:34px}.barra-l{grid-template-columns:120px 1fr}}
 </style>
 </head>
@@ -105,14 +108,19 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
       <h1>Painel de Separação</h1>
       <p class="sub" id="sub">Carregando…</p>
     </div>
-    <div class="seletor">
-      <button id="ant" aria-label="Dia anterior">‹</button>
-      <select id="dia" aria-label="Dia"></select>
-      <button id="prox" aria-label="Próximo dia">›</button>
+    <div class="periodo">
+      <div class="chips" id="atalhos"></div>
+      <div class="seletor">
+        <button id="ant" aria-label="Período anterior" title="Período anterior">‹</button>
+        <label>De <input type="date" id="de"></label>
+        <label>até <input type="date" id="ate"></label>
+        <button id="prox" aria-label="Próximo período" title="Próximo período">›</button>
+      </div>
     </div>
   </header>
 
   <div class="aviso" id="aviso" hidden></div>
+  <div id="conteudo">
   <div class="conclusao" id="conclusao" hidden></div>
 
   <section class="kpis" id="kpis"></section>
@@ -150,7 +158,7 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
 
   <section class="cartao secao">
     <h2>Faltas por produto — prioridade para compras e produção</h2>
-    <p class="nota">“Destrava sozinho” = valor pendente liberado ao resolver apenas este produto (pedidos em que ele é a única falta). Reincidência = dias em falta nos últimos 30.</p>
+    <p class="nota">“Destrava sozinho” = valor pendente liberado ao resolver apenas este produto (pedidos em que ele é a única falta). Reincidência = dias em falta nos últimos 30; em períodos, dias em falta dentro do período.</p>
     <div class="rolagem" id="faltas"></div>
   </section>
 
@@ -171,11 +179,14 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
     <div class="rolagem" id="itens"></div>
   </section>
 
+  </div>
+
   <footer>
-    <b>Status do ERP:</b> Atendido = PENDENTE “N”. Fora do prazo = pendente, com estoque, pedido aceita fatura parcial.
-    Aguardando outros itens = pendente, com estoque, pedido sem fatura parcial. Fabricado = pendente, sem estoque, referência terminada em #.
+    <b>Status do ERP:</b> Atendido = PENDENTE “N”; o valor faturado é a soma desses itens. Fora do prazo = pendente, com estoque e sem impedimento no pedido (aceita fatura parcial ou todos os itens têm estoque).
+    Aguardando outros itens = pendente, com estoque, em pedido sem fatura parcial que tem outro item em falta. Fabricado = pendente, sem estoque, referência terminada em #.
     SC = pendente, sem estoque, demais referências.<br>
-    Estoque e pendência são o retrato do momento em que o ERP gerou o arquivo; o estoque é o total do produto, sem descontar reservas de outros pedidos.
+    Cada dia é o retrato tirado quando o ERP gerou o arquivo (manhã seguinte à impressão); em períodos, os dias são somados e um item resolvido depois continua contando como pendente do seu dia.
+    Estoque e pendência são desse mesmo momento; o estoque é o total do produto, sem descontar reservas de outros pedidos.
     Valores de venda líquidos (total − desconto). <span id="fonte"></span>
   </footer>
 </div>
@@ -279,7 +290,7 @@ function chips(alvo, opcoes, atual, aoMudar){
   });
 }
 
-let resumo = [], atual = null, dados = null, cache = {}, visao = null, filtroSt = "", filtroPed = "";
+let resumo = [], de = null, ate = null, dias = [], dados = null, cache = {}, visao = null, filtroSt = "", filtroPed = "", avisoFixo = "", pedidoAtual = 0;
 
 function delta(hoje, antes, rotulo, subirEhRuim){
   const d = (hoje - antes) * 100;
@@ -298,11 +309,12 @@ const medidor = (f, cor) => el("div", {class:"medidor"}, el("i", {class:"c-" + c
 const etqGrupo = (g, texto) => el("span", {class:"etq"}, el("i", {class:"c-" + g}), texto);
 
 /* monta toda a leitura de negocio do dia */
+const chave = i => i.d + "|" + i.cod;
 function analisar(it){
   const pend = it.filter(i => i.pend);
   const ped = new Map();
   it.forEach(i => {
-    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, ne:0, nf:0, ve:0, vf:0, faltas:new Set(), st:{}});
+    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, d:i.d, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, ne:0, nf:0, ve:0, vf:0, faltas:new Set(), st:{}});
     const p = ped.get(i.nota), g = grupo(i);
     p.n++; p.v += i.v; if (i.h < p.h) p.h = i.h;
     if (i.pend){
@@ -324,8 +336,15 @@ function analisar(it){
   /* faltas por produto */
   const prod = new Map();
   pend.filter(i => grupo(i) === "f").forEach(i => {
-    if (!prod.has(i.cod)) prod.set(i.cod, {cod:i.cod, ref:i.ref, st:i.st, q:0, e:i.e, v:0, notas:new Set(), destrava:0});
-    const x = prod.get(i.cod); x.q += i.q; x.v += i.v; x.notas.add(i.nota); x.e = Math.min(x.e, i.e);
+    if (!prod.has(i.cod)) prod.set(i.cod, {cod:i.cod, ref:i.ref, st:i.st, q:0, v:0, notas:new Set(), destrava:0, dia:new Map()});
+    const x = prod.get(i.cod); x.q += i.q; x.v += i.v; x.notas.add(i.nota);
+    const dd = x.dia.get(i.d) || {q:0, e:i.e}; dd.q += i.q; dd.e = Math.min(dd.e, i.e); x.dia.set(i.d, dd);
+  });
+  prod.forEach(x => {
+    const ds = [...x.dia.keys()].sort();
+    x.e = x.dia.get(ds[ds.length - 1]).e;   /* estoque do dia mais recente */
+    x.falta = soma([...x.dia.values()], dd => Math.max(0, dd.q - Math.max(0, dd.e)));
+    x.dias = ds.length;
   });
   comPend.forEach(p => {
     if (p.faltas.size !== 1) return;
@@ -333,17 +352,17 @@ function analisar(it){
     if (x) x.destrava += p.parc ? p.vf : p.vp;
   });
 
-  /* estoque disputado entre os pendentes "com estoque" do dia */
+  /* estoque disputado entre os pendentes "com estoque" de um mesmo dia */
   const dem = new Map();
   pend.filter(i => grupo(i) === "e").forEach(i => {
-    const x = dem.get(i.cod) || {q:0, e:i.e, v:0}; x.q += i.q; x.v += i.v; x.e = Math.min(x.e, i.e); dem.set(i.cod, x);
+    const k = chave(i), x = dem.get(k) || {q:0, e:i.e}; x.q += i.q; x.e = Math.min(x.e, i.e); dem.set(k, x);
   });
-  const disputa = new Set([...dem].filter(([, x]) => x.q > x.e).map(([c]) => c));
+  const disputa = new Set([...dem].filter(([, x]) => x.q > x.e).map(([k]) => k));
 
   return {it, pend, pedidos, comPend, prod:[...prod.values()], disputa,
     vTot: soma(it, i => i.v), vPend: soma(pend, i => i.v),
     vLib: soma(comPend, p => p.lib), vArr: soma(comPend, p => p.arr), vFalta: soma(comPend, p => p.vf),
-    vDisp: soma(pend.filter(i => grupo(i) === "e" && disputa.has(i.cod)), i => i.v)};
+    vDisp: soma(pend.filter(i => grupo(i) === "e" && disputa.has(chave(i))), i => i.v)};
 }
 
 const SIT = {PRONTO:["e","Pronto para faturar"], PARCIAL:["e","Parcialmente liberável"], FALTA:["f","Aguardando falta"], TRAVADO:["f","Travado por falta"]};
@@ -351,36 +370,47 @@ const SIT = {PRONTO:["e","Pronto para faturar"], PARCIAL:["e","Parcialmente libe
 function desenhar(){
   const A = visao = analisar(dados.itens);
   const {it, pend, pedidos, comPend} = A;
-  const idx = resumo.findIndex(d => d.data === atual), antes = idx > 0 ? resumo[idx - 1] : null;
-  const rotAntes = antes ? fDc(antes.data) : "";
+  const multi = dias.length > 1;
+  const i0 = resumo.indexOf(dias[0]), ant = resumo.slice(Math.max(0, i0 - dias.length), i0);
+  const antes = ant.length === dias.length
+    ? {valor:soma(ant, d => d.valor), valor_pend:soma(ant, d => d.valor_pend), itens:soma(ant, d => d.itens), itens_pend:soma(ant, d => d.itens_pend)} : null;
+  const rotAntes = antes ? (multi ? `os ${dias.length} dias anteriores` : fDc(ant[0].data)) : "";
   const prontos = comPend.filter(p => p.lib > 0), travados = comPend.filter(p => p.sit === "TRAVADO");
 
-  $("sub").textContent = `Impressões de separação de ${fD(atual)} (${semana(atual)}) · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
-  $("fonte").textContent = "Arquivo de origem: " + dados.arquivo + ".";
+  const quando = multi ? `de ${fD(dias[0].data)} a ${fD(dias[dias.length - 1].data)} (${dias.length} dias com arquivo)` : `de ${fD(dias[0].data)} (${semana(dias[0].data)})`;
+  $("sub").textContent = `Impressões de separação ${quando} · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
+  $("fonte").textContent = multi ? `${dias.length} arquivos no período.` : "Arquivo de origem: " + dados.arquivo + ".";
 
   /* conclusao */
   const c = limpar($("conclusao")); c.hidden = false;
-  if (!it.length) c.append("Nenhum item impresso para separação neste dia.");
-  else if (!pend.length) c.append(el("b", null, "Dia 100% atendido: "), `${fR(A.vTot)} em ${pl(pedidos.length, "pedido", "pedidos")}, sem pendência.`);
+  if (!it.length) c.append("Nenhum item impresso para separação no período.");
+  else if (!pend.length) c.append(el("b", null, multi ? "Período 100% atendido: " : "Dia 100% atendido: "), `${fR(A.vTot)} em ${pl(pedidos.length, "pedido", "pedidos")}, sem pendência.`);
   else {
-    c.append(el("b", null, `${fR(A.vPend)} ficaram pendentes`), ` (${fP(A.vPend / A.vTot)} do valor enviado). `);
+    c.append(el("b", null, `${fR(A.vPend)} ficaram pendentes`), `${multi ? " no dia seguinte à impressão" : ""} (${fP(A.vPend / A.vTot)} do valor enviado). `);
     if (A.vLib > 0) c.append(el("b", null, `${fR(A.vLib)} já têm estoque`), ` e podem ser faturados em ${pl(prontos.length, "pedido", "pedidos")}. `);
     if (A.vFalta > 0){
       c.append(`${fR(A.vFalta)} estão sem estoque`);
       if (A.vArr > 0) c.append(" e ", el("b", null, `seguram outros ${fR(A.vArr)}`), ` em itens disponíveis de ${pl(travados.length, "pedido", "pedidos")} sem fatura parcial`);
       c.append(".");
     }
-    if (A.disputa.size) c.append(el("span", {class:"obs"}, `Atenção: ${pl(A.disputa.size, "produto tem", "produtos têm")} estoque menor que a soma dos pedidos pendentes do dia (${fR(A.vDisp)}); parte do valor “com estoque” pode não ser atendida.`));
+    const nDisp = new Set([...A.disputa].map(k => k.split("|")[1])).size;
+    if (nDisp) c.append(el("span", {class:"obs"}, `Atenção: ${pl(nDisp, "produto tem", "produtos têm")} estoque menor que a soma dos pedidos pendentes do dia (${fR(A.vDisp)}); parte do valor “com estoque” pode não ser atendida.`));
     const semClasse = pend.filter(i => i.st === "SEM CLASSIFICAÇÃO").length;
     if (semClasse) c.append(el("span", {class:"obs"}, `${pl(semClasse, "item pendente veio", "itens pendentes vieram")} sem status do ERP; foram classificados aqui pela comparação entre quantidade e estoque.`));
+    if (multi) c.append(el("span", {class:"obs"}, "Leitura do período: soma dos retratos diários. Um item resolvido depois continua contando como pendente do dia em que foi impresso."));
   }
 
   /* kpis gerais */
   const fItens = it.length ? 1 - pend.length / it.length : 0, fPed = pedidos.length ? 1 - comPend.length / pedidos.length : 0;
   limpar($("kpis")).append(
-    kpi("Valor pendente", fR(A.vPend), `${fP(A.vTot ? A.vPend / A.vTot : 0)} do valor · ${pl(pend.length, "item", "itens")}`,
-        antes && antes.valor ? delta(A.vTot ? A.vPend / A.vTot : 0, antes.valor_pend / antes.valor, rotAntes, true) : null, "heroi"),
     kpi("Valor enviado para separação", fR(A.vTot), `${pl(it.length, "item", "itens")} · ${pl(pedidos.length, "pedido", "pedidos")}`),
+    kpi("Valor faturado", fR(A.vTot - A.vPend), `${fP(A.vTot ? 1 - A.vPend / A.vTot : 0)} do enviado · ${pl(it.length - pend.length, "item", "itens")}`,
+        el("div", null, medidor(A.vTot ? 1 - A.vPend / A.vTot : 0, "a"),
+           antes && antes.valor ? delta(A.vTot ? 1 - A.vPend / A.vTot : 0, 1 - antes.valor_pend / antes.valor, rotAntes, false) : null), "", "a"),
+    kpi("Valor pendente", fR(A.vPend), `${fP(A.vTot ? A.vPend / A.vTot : 0)} do enviado · ${pl(pend.length, "item", "itens")}`,
+        el("div", {class:"medidor", style:"display:flex;gap:2px"},
+           el("i", {class:"c-e", style:`width:${A.vTot ? (A.vLib + A.vArr) / A.vTot * 100 : 0}%;border-radius:4px 0 0 4px`}),
+           el("i", {class:"c-f", style:`width:${A.vTot ? A.vFalta / A.vTot * 100 : 0}%;border-radius:0`}))),
     kpi("Itens atendidos", fP(fItens), `${fN(it.length - pend.length)} de ${fN(it.length)} itens`,
         el("div", null, medidor(fItens, "a"), antes && antes.itens ? delta(fItens, 1 - antes.itens_pend / antes.itens, rotAntes, false) : null)),
     kpi("Pedidos completos", fP(fPed), `${fN(pedidos.length - comPend.length)} de ${fN(pedidos.length)} pedidos`, medidor(fPed, "a"))
@@ -435,27 +465,28 @@ function desenhar(){
     "Sem itens neste dia.");
 
   /* historico */
-  const ult = resumo.slice(-30);
+  const iFim = resumo.indexOf(dias[dias.length - 1]);
+  const ult = dias.length >= 30 ? dias : (iFim >= resumo.length - 30 ? resumo.slice(-30) : resumo.slice(Math.max(0, iFim - 29), iFim + 1));
   $("histnota").textContent = resumo.length > 1
-    ? `Últimos ${ult.length} dias com arquivo. Clique em um dia para abrir.`
+    ? `${ult.length} dias com arquivo; o período selecionado está destacado. Clique em um dia para abrir só ele.`
     : "O histórico cresce a cada arquivo diário recebido.";
   colunas($("hist"), ult.map(d => ({
-    rot: fDc(d.data), a: d.valor - d.valor_pend, e: d.valor_estoque || 0, f: d.valor_falta || 0, sel: d.data === atual,
-    clique: () => abrir(d.data),
+    rot: fDc(d.data), a: d.valor - d.valor_pend, e: d.valor_estoque || 0, f: d.valor_falta || 0, sel: d.data >= de && d.data <= ate,
+    clique: () => definir(d.data, d.data),
     dica: [`${fD(d.data)} (${semana(d.data)})`, `Enviado: ${fR(d.valor)}`, `Pendente: ${fR(d.valor_pend)} (${fP(d.valor ? d.valor_pend / d.valor : 0)})`,
            `Com estoque: ${fR(d.valor_estoque || 0)}`, `Sem estoque: ${fR(d.valor_falta || 0)}`]
   })));
 
   /* faltas por produto */
   tabela($("faltas"),
-    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedidos", n:1}, {t:"Qtd. pedida", n:1}, {t:"Estoque", n:1}, {t:"Falta", n:1}, {t:"Valor em falta", n:1}, {t:"Destrava sozinho", n:1}, {t:"Reincidência"}],
+    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedidos", n:1}, {t:"Qtd. pedida", n:1}, {t:multi ? "Estoque (último dia)" : "Estoque", n:1}, {t:"Falta", n:1}, {t:"Valor em falta", n:1}, {t:"Destrava sozinho", n:1}, {t:multi ? "Dias em falta" : "Reincidência (30 dias)"}],
     A.prod.sort((a, b) => b.destrava - a.destrava || b.v - a.v).map(x => {
-      const r = (dados.reinc || {})[x.ref] || 1;
+      const r = multi ? x.dias : ((dados.reinc || {})[x.ref] || 1);
       return [x.ref, String(x.cod), nomeSt(x.st), fN(x.notas.size), fN(x.q),
-        x.e < 0 ? el("span", {class:"etq forte"}, fN(x.e)) : fN(x.e), fN(Math.max(0, x.q - Math.max(0, x.e))), fR2(x.v),
-        x.destrava ? fR2(x.destrava) : "", r > 1 ? el("span", {class:"etq forte"}, `${r} dias`) : el("span", {class:"etq"}, "1º dia")];
+        x.e < 0 ? el("span", {class:"etq forte"}, fN(x.e)) : fN(x.e), fN(x.falta), fR2(x.v),
+        x.destrava ? fR2(x.destrava) : "", r > 1 ? el("span", {class:"etq forte"}, `${r} dias`) : el("span", {class:"etq"}, multi ? "1 dia" : "1º dia")];
     }),
-    "Nenhum item em falta de estoque neste dia.");
+    "Nenhum item em falta de estoque no período.");
 
   desenharPedidos();
   desenharItens();
@@ -466,9 +497,9 @@ function desenharPedidos(){
   chips($("chipsPed"), [["", `Todos (${visao.comPend.length})`], ...Object.keys(SIT).filter(cont).map(s => [s, `${SIT[s][1]} (${cont(s)})`])], filtroPed,
     v => { filtroPed = v; desenharPedidos(); });
   tabela($("pedidos"),
-    [{t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Situação"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Liberável", n:1}, {t:"Composição"}],
+    [...(dias.length > 1 ? [{t:"Data"}] : []), {t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Situação"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Liberável", n:1}, {t:"Composição"}],
     visao.comPend.filter(p => !filtroPed || p.sit === filtroPed).sort((a, b) => b.vp - a.vp).map(p => [
-      String(p.nota), String(p.top), p.h.slice(0, 5), p.parc ? "Sim" : "Não",
+      ...(dias.length > 1 ? [fDc(p.d)] : []), String(p.nota), String(p.top), p.h.slice(0, 5), p.parc ? "Sim" : "Não",
       etqGrupo(SIT[p.sit][0], SIT[p.sit][1]), `${fN(p.np)} de ${fN(p.n)}`, fR2(p.vp), p.lib ? fR2(p.lib) : "",
       ORDEM.filter(s => p.st[s]).map(s => `${p.st[s]} ${s === "SC" ? "SC" : nomeSt(s).toLowerCase()}`).join(" · ")]),
     "Nenhum pedido com pendência para este filtro.");
@@ -480,37 +511,77 @@ function desenharItens(){
     v => { filtroSt = v; desenharItens(); });
   const termo = $("busca").value.trim().toUpperCase();
   tabela($("itens"),
-    [{t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Qtd.", n:1}, {t:"Estoque", n:1}, {t:"Valor", n:1}, {t:"Observação"}],
+    [...(dias.length > 1 ? [{t:"Data"}] : []), {t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Qtd.", n:1}, {t:"Estoque", n:1}, {t:"Valor", n:1}, {t:"Observação"}],
     pend.filter(i => !filtroSt || i.st === filtroSt)
         .filter(i => !termo || (i.ref + " " + i.cod + " " + i.nota).toUpperCase().includes(termo))
         .sort((a, b) => b.v - a.v)
         .map(i => {
           const g = grupo(i);
-          const obs = g === "e" && visao.disputa.has(i.cod) ? el("span", {class:"etq forte"}, "Estoque disputado")
+          const obs = g === "e" && visao.disputa.has(chave(i)) ? el("span", {class:"etq forte"}, "Estoque disputado")
                     : i.e < 0 ? el("span", {class:"etq forte"}, "Estoque negativo")
                     : g === "f" && i.e > 0 ? el("span", {class:"etq"}, `Atende ${fN(i.e)} de ${fN(i.q)}`) : "";
-          return [i.ref, String(i.cod), etqGrupo(g, nomeSt(i.st)), String(i.nota), i.parc ? "Sim" : "Não", fN(i.q), fN(i.e), fR2(i.v), obs];
+          return [...(dias.length > 1 ? [fDc(i.d)] : []), i.ref, String(i.cod), etqGrupo(g, nomeSt(i.st)), String(i.nota), i.parc ? "Sim" : "Não", fN(i.q), fN(i.e), fR2(i.v), obs];
         }),
     "Nenhum item pendente para este filtro.");
 }
 
-async function abrir(dia){
-  atual = dia;
-  $("dia").value = dia;
-  const i = resumo.findIndex(d => d.data === dia);
-  $("ant").disabled = i <= 0; $("prox").disabled = i >= resumo.length - 1;
-  try{
-    if (!cache[dia]){
-      const r = await fetch(`dados/json/${dia}.json`, {cache:"no-cache"});
-      if (!r.ok) throw new Error(r.status);
-      cache[dia] = await r.json();
-    }
-    dados = cache[dia];
-    if (atual === dia){ filtroSt = ""; filtroPed = ""; desenhar(); }
-  }catch(e){ erro(`Não foi possível carregar os dados de ${fD(dia)}.`); }
+function aviso(msg){
+  const a = $("aviso"), texto = [avisoFixo, msg].filter(Boolean).join(" ");
+  a.hidden = !texto; a.textContent = texto;
 }
 
-function erro(msg){ const a = $("aviso"); a.hidden = false; a.textContent = msg; }
+async function carregar(dia){
+  if (!cache[dia]){
+    const r = await fetch(`dados/json/${dia}.json`, {cache:"no-cache"});
+    if (!r.ok) throw new Error(r.status);
+    cache[dia] = await r.json();
+  }
+  return cache[dia];
+}
+
+const maisDias = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const ultimoDia = () => resumo[resumo.length - 1].data;
+const ATALHOS = [
+  ["1",    "Último dia", () => [ultimoDia(), ultimoDia()]],
+  ["7",    "7 dias",     () => [maisDias(ultimoDia(), -6), ultimoDia()]],
+  ["30",   "30 dias",    () => [maisDias(ultimoDia(), -29), ultimoDia()]],
+  ["mes",  "Mês",        () => [ultimoDia().slice(0, 8) + "01", ultimoDia()]],
+  ["tudo", "Tudo",       () => [resumo[0].data, ultimoDia()]]
+];
+function desenharAtalhos(){
+  const ativo = ATALHOS.find(a => { const [x, y] = a[2](); return x === de && y === ate; });
+  chips($("atalhos"), ATALHOS.map(a => [a[0], a[1]]), ativo ? ativo[0] : null,
+    k => definir(...ATALHOS.find(a => a[0] === k)[2]()));
+}
+
+/* seleciona o periodo [inicio, fim] (datas AAAA-MM-DD) e redesenha o painel */
+async function definir(inicio, fim){
+  if (inicio > fim) [inicio, fim] = [fim, inicio];
+  de = inicio; ate = fim;
+  $("de").value = de; $("ate").value = ate;
+  dias = resumo.filter(d => d.data >= de && d.data <= ate);
+  const i0 = dias.length ? resumo.indexOf(dias[0]) : -1, i1 = dias.length ? resumo.indexOf(dias[dias.length - 1]) : -1;
+  $("ant").disabled = i0 <= 0; $("prox").disabled = i1 < 0 || i1 >= resumo.length - 1;
+  desenharAtalhos();
+  const meu = ++pedidoAtual;
+  if (!dias.length){
+    $("conteudo").hidden = true; $("sub").textContent = "";
+    return aviso(`Nenhum arquivo de separação entre ${fD(de)} e ${fD(ate)}.`);
+  }
+  try{
+    const partes = await Promise.all(dias.map(d => carregar(d.data)));
+    if (meu !== pedidoAtual) return;   /* o usuario ja escolheu outro periodo */
+    /* pedido reimpresso em mais de um dia conta apenas na impressao mais recente */
+    const ultima = new Map();
+    partes.forEach(p => p.itens.forEach(i => ultima.set(i.nota, p.data)));
+    const itens = [];
+    partes.forEach(p => p.itens.forEach(i => { if (ultima.get(i.nota) === p.data) itens.push({...i, d:p.data}); }));
+    dados = {itens, reinc: partes.length === 1 ? partes[0].reinc : {}, arquivo: partes[partes.length - 1].arquivo};
+    filtroSt = ""; filtroPed = "";
+    $("conteudo").hidden = false; aviso("");
+    desenhar();
+  }catch(e){ aviso("Não foi possível carregar os dados do período selecionado."); }
+}
 
 async function iniciar(){
   try{
@@ -518,22 +589,35 @@ async function iniciar(){
     if (!r.ok) throw new Error(r.status);
     resumo = (await r.json()).dias || [];
   }catch(e){
-    $("sub").textContent = "";
-    return erro("Não foi possível carregar dados/resumo.json. O painel precisa ser aberto pelo endereço do GitHub Pages (ou por um servidor local), não como arquivo solto.");
+    $("sub").textContent = ""; $("conteudo").hidden = true;
+    return aviso("Não foi possível carregar dados/resumo.json. O painel precisa ser aberto pelo endereço do GitHub Pages (ou por um servidor local), não como arquivo solto.");
   }
-  if (!resumo.length){ $("sub").textContent = ""; return erro("Ainda não há nenhum arquivo de separação no layout novo (com estoque e status). O painel aparece assim que o primeiro arquivo chegar."); }
-  const sel = $("dia");
-  resumo.slice().reverse().forEach(d => sel.append(el("option", {value:d.data}, `${fD(d.data)} · ${semana(d.data)}`)));
-  sel.addEventListener("change", () => abrir(sel.value));
-  const passo = n => { const i = resumo.findIndex(d => d.data === atual) + n; if (resumo[i]) abrir(resumo[i].data); };
+  if (!resumo.length){
+    $("sub").textContent = ""; $("conteudo").hidden = true;
+    return aviso("Ainda não há nenhum arquivo de separação no layout novo (com estoque e status). O painel aparece assim que o primeiro arquivo chegar.");
+  }
+  const ultimo = ultimoDia();
+  ["de", "ate"].forEach(id => {
+    $(id).min = resumo[0].data; $(id).max = ultimo;
+    $(id).addEventListener("change", () => { if ($("de").value && $("ate").value) definir($("de").value, $("ate").value); });
+  });
+  const passo = s => {
+    if (!dias.length) return;
+    const i0 = resumo.indexOf(dias[0]), i1 = resumo.indexOf(dias[dias.length - 1]), n = dias.length;
+    let a, b;
+    if (s < 0){ b = i0 - 1; a = Math.max(0, b - n + 1); } else { a = i1 + 1; b = Math.min(resumo.length - 1, a + n - 1); }
+    if (resumo[a] && resumo[b]) definir(resumo[a].data, resumo[b].data);
+  };
   $("ant").addEventListener("click", () => passo(-1));
   $("prox").addEventListener("click", () => passo(1));
   $("busca").addEventListener("input", desenharItens);
-  const ultimo = resumo[resumo.length - 1].data;
   const atraso = Math.floor((Date.now() - new Date(ultimo + "T12:00:00")) / 864e5);
-  if (atraso >= 4) erro(`Atenção: o último arquivo recebido é de ${fD(ultimo)} (${atraso} dias atrás). Verifique o envio do ERP e a rotina de atualização.`);
-  const pedido = new URLSearchParams(location.search).get("dia");
-  abrir(resumo.some(d => d.data === pedido) ? pedido : ultimo);
+  if (atraso >= 4) avisoFixo = `Atenção: o último arquivo recebido é de ${fD(ultimo)} (${atraso} dias atrás). Verifique o envio do ERP e a rotina de atualização.`;
+  const q = new URLSearchParams(location.search), data = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : null;
+  const dia = data(q.get("dia")), qDe = data(q.get("de")), qAte = data(q.get("ate"));
+  if (qDe && qAte) definir(qDe, qAte);
+  else if (dia && resumo.some(d => d.data === dia)) definir(dia, dia);
+  else definir(ultimo, ultimo);
 }
 iniciar();
 </script>
