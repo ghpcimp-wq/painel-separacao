@@ -11,10 +11,10 @@ Painel em HTML (GitHub Pages) alimentado pelo XLSX diário que o ERP envia por e
 ## Layout do arquivo
 
 O painel lê as colunas pela posição, na ordem do relatório `relatorio_impressao_separacao.jrxml`:
-data/hora da impressão, data, CODTIPOPER, NUNOTA, fatura parcial, CODPROD, REFERENCIA, QTDNEG, QTDESTOQUE, valor de venda do item, PENDENTE e STATUS.
+data/hora da impressão, data, CODTIPOPER, NUNOTA, fatura parcial, CODPROD, REFERENCIA, QTDNEG, QTDESTOQUE, valor de venda do item, PENDENTE, STATUS e EMPRESA.
 Se a ordem das colunas mudar no relatório, `scripts/gerar_dados.py` e `index.html` precisam ser ajustados juntos.
 
-Arquivos no layout antigo (10 colunas, sem estoque e status) continuam guardados em `dados/xlsx/`, mas são ignorados pelo painel.
+Arquivos sem a coluna EMPRESA aparecem como empresa "NÃO INFORMADA". Arquivos no layout antigo (10 colunas, sem estoque e status) continuam guardados em `dados/xlsx/`, mas são ignorados pelo painel.
 
 ## Configuração (uma única vez)
 
@@ -40,7 +40,9 @@ Arquivos no layout antigo (10 colunas, sem estoque e status) continuam guardados
 ## Uso do dia a dia
 
 - **Carga manual:** envie um XLSX para `dados/xlsx/` com o nome `AAAA-MM-DD_SEPARACAO.xlsx`; o painel é atualizado sozinho.
-- **Abrir um dia específico:** `.../index.html?dia=2026-10-08`.
+- **Período:** escolha as datas no topo do painel ou use os atalhos (último dia, 7 dias, 30 dias, mês, tudo).
+- **Empresas:** no topo, "Todas" ou clique em uma ou mais empresas; a escolha fica salva no navegador.
+- **Link direto:** `.../index.html?dia=2026-10-08` para um dia ou `.../index.html?de=2026-10-01&ate=2026-10-08` para um período; acrescente `&emp=KPT,GHPC` para abrir já filtrado.
 - **Falhas:** se o GitHub recusar o envio (token vencido, por exemplo), o Google avisa por e-mail e o script tenta de novo na hora seguinte. O painel também mostra um alerta quando o último arquivo tem 4 dias ou mais.
 - **E-mails antigos:** o script olha os últimos 10 dias. Para importar um período maior, aumente `DIAS_BUSCA` no código e execute uma vez.
 
