@@ -91,6 +91,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips button{cursor:pointer;padding:5px 10px;border-radius:999px}
+#empresas button{font-weight:600}
+.linha-total td{font-weight:650;border-top:1px solid var(--eixo)}
 .chips button[aria-pressed=true]{background:var(--tinta);color:var(--sup);border-color:var(--tinta)}
 .busca{flex:1;min-width:160px}
 .vazio{color:var(--tinta2);padding:18px 4px}
@@ -109,6 +111,7 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
       <p class="sub" id="sub">Carregando…</p>
     </div>
     <div class="periodo">
+      <div class="chips" id="empresas" aria-label="Empresas"></div>
       <div class="chips" id="atalhos"></div>
       <div class="seletor">
         <button id="ant" aria-label="Período anterior" title="Período anterior">‹</button>
@@ -126,6 +129,12 @@ footer{color:var(--tinta2);font-size:12px;margin-top:18px;line-height:1.6}
   <section class="kpis" id="kpis"></section>
   <h3>Onde está o valor pendente e quem resolve</h3>
   <section class="kpis" id="decomp"></section>
+
+  <section class="cartao secao" id="cartaoEmp">
+    <h2>Comparativo por empresa</h2>
+    <p class="nota">Empresas selecionadas no topo, lado a lado. Pendente = valor não atendido; as três últimas colunas dividem esse pendente por responsável.</p>
+    <div id="porEmp" style="overflow-x:auto"></div>
+  </section>
 
   <section class="grade2">
     <div class="cartao">
@@ -290,7 +299,7 @@ function chips(alvo, opcoes, atual, aoMudar){
   });
 }
 
-let resumo = [], de = null, ate = null, dias = [], dados = null, cache = {}, visao = null, filtroSt = "", filtroPed = "", avisoFixo = "", pedidoAtual = 0;
+let resumo = [], de = null, ate = null, dias = [], dados = null, cache = {}, visao = null, filtroSt = "", filtroPed = "", avisoFixo = "", pedidoAtual = 0, EMPRESAS = [], selEmp = new Set();
 
 function delta(hoje, antes, rotulo, subirEhRuim){
   const d = (hoje - antes) * 100;
@@ -314,7 +323,7 @@ function analisar(it){
   const pend = it.filter(i => i.pend);
   const ped = new Map();
   it.forEach(i => {
-    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, d:i.d, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, ne:0, nf:0, ve:0, vf:0, faltas:new Set(), st:{}});
+    if (!ped.has(i.nota)) ped.set(i.nota, {nota:i.nota, d:i.d, emp:i.emp, top:i.top, parc:i.parc, h:i.h, n:0, np:0, v:0, vp:0, ne:0, nf:0, ve:0, vf:0, faltas:new Set(), st:{}});
     const p = ped.get(i.nota), g = grupo(i);
     p.n++; p.v += i.v; if (i.h < p.h) p.h = i.h;
     if (i.pend){
@@ -368,17 +377,17 @@ function analisar(it){
 const SIT = {PRONTO:["e","Pronto para faturar"], PARCIAL:["e","Parcialmente liberável"], FALTA:["f","Aguardando falta"], TRAVADO:["f","Travado por falta"]};
 
 function desenhar(){
-  const A = visao = analisar(dados.itens);
+  const A = visao = analisar(dados.itens.filter(empOk));
   const {it, pend, pedidos, comPend} = A;
   const multi = dias.length > 1;
-  const i0 = resumo.indexOf(dias[0]), ant = resumo.slice(Math.max(0, i0 - dias.length), i0);
+  const i0 = resumo.indexOf(dias[0]), ant = resumo.slice(Math.max(0, i0 - dias.length), i0).map(rf);
   const antes = ant.length === dias.length
     ? {valor:soma(ant, d => d.valor), valor_pend:soma(ant, d => d.valor_pend), itens:soma(ant, d => d.itens), itens_pend:soma(ant, d => d.itens_pend)} : null;
   const rotAntes = antes ? (multi ? `os ${dias.length} dias anteriores` : fDc(ant[0].data)) : "";
   const prontos = comPend.filter(p => p.lib > 0), travados = comPend.filter(p => p.sit === "TRAVADO");
 
   const quando = multi ? `de ${fD(dias[0].data)} a ${fD(dias[dias.length - 1].data)} (${dias.length} dias com arquivo)` : `de ${fD(dias[0].data)} (${semana(dias[0].data)})`;
-  $("sub").textContent = `Impressões de separação ${quando} · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
+  $("sub").textContent = `${rotEmp()} · impressões de separação ${quando} · ${fN(it.length)} itens em ${fN(pedidos.length)} pedidos`;
   $("fonte").textContent = multi ? `${dias.length} arquivos no período.` : "Arquivo de origem: " + dados.arquivo + ".";
 
   /* conclusao */
@@ -464,13 +473,32 @@ function desenhar(){
       el("span", null, el("span", {class:"mini"}, el("i", {style:`width:${t.v ? t.vp / t.v * 100 : 0}%`})), fP(t.v ? t.vp / t.v : 0))]),
     "Sem itens neste dia.");
 
+  /* comparativo por empresa */
+  const empsVis = EMPRESAS.filter(e => selEmp.has(e));
+  $("cartaoEmp").hidden = empsVis.length < 2;
+  if (empsVis.length > 1){
+    const linhaEmp = (nome, B, total) => {
+      return [nome, fR(B.vTot), fR(B.vTot - B.vPend), fR(B.vPend),
+        el("span", null, el("span", {class:"mini"}, el("i", {style:`width:${B.vTot ? B.vPend / B.vTot * 100 : 0}%`})), fP(B.vTot ? B.vPend / B.vTot : 0)),
+        `${fN(B.pedidos.length - B.comPend.length)} de ${fN(B.pedidos.length)}`, fR(B.vLib), fR(B.vArr), fR(B.vFalta)];
+    };
+    const linhas = empsVis.map(e => linhaEmp(e, analisar(dados.itens.filter(i => i.emp === e))));
+    linhas.push(linhaEmp("Total selecionado", A));
+    tabela($("porEmp"),
+      [{t:"Empresa"}, {t:"Enviado", n:1}, {t:"Faturado", n:1}, {t:"Pendente", n:1}, {t:"% pendente"}, {t:"Pedidos completos", n:1},
+       {t:"Pronto para faturar", n:1}, {t:"Retido por arrasto", n:1}, {t:"Em falta", n:1}],
+      linhas, "Sem dados.");
+    const tb = $("porEmp").querySelector("tbody");
+    if (tb && tb.lastChild) tb.lastChild.className = "linha-total";
+  }
+
   /* historico */
   const iFim = resumo.indexOf(dias[dias.length - 1]);
   const ult = dias.length >= 30 ? dias : (iFim >= resumo.length - 30 ? resumo.slice(-30) : resumo.slice(Math.max(0, iFim - 29), iFim + 1));
   $("histnota").textContent = resumo.length > 1
     ? `${ult.length} dias com arquivo; o período selecionado está destacado. Clique em um dia para abrir só ele.`
     : "O histórico cresce a cada arquivo diário recebido.";
-  colunas($("hist"), ult.map(d => ({
+  colunas($("hist"), ult.map(rf).map(d => ({
     rot: fDc(d.data), a: d.valor - d.valor_pend, e: d.valor_estoque || 0, f: d.valor_falta || 0, sel: d.data >= de && d.data <= ate,
     clique: () => definir(d.data, d.data),
     dica: [`${fD(d.data)} (${semana(d.data)})`, `Enviado: ${fR(d.valor)}`, `Pendente: ${fR(d.valor_pend)} (${fP(d.valor ? d.valor_pend / d.valor : 0)})`,
@@ -497,9 +525,9 @@ function desenharPedidos(){
   chips($("chipsPed"), [["", `Todos (${visao.comPend.length})`], ...Object.keys(SIT).filter(cont).map(s => [s, `${SIT[s][1]} (${cont(s)})`])], filtroPed,
     v => { filtroPed = v; desenharPedidos(); });
   tabela($("pedidos"),
-    [...(dias.length > 1 ? [{t:"Data"}] : []), {t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Situação"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Liberável", n:1}, {t:"Composição"}],
+    [...(dias.length > 1 ? [{t:"Data"}] : []), ...(selEmp.size > 1 ? [{t:"Empresa"}] : []), {t:"Pedido (nº único)"}, {t:"TOP"}, {t:"Impresso às"}, {t:"Fatura parcial"}, {t:"Situação"}, {t:"Itens pendentes", n:1}, {t:"Valor pendente", n:1}, {t:"Liberável", n:1}, {t:"Composição"}],
     visao.comPend.filter(p => !filtroPed || p.sit === filtroPed).sort((a, b) => b.vp - a.vp).map(p => [
-      ...(dias.length > 1 ? [fDc(p.d)] : []), String(p.nota), String(p.top), p.h.slice(0, 5), p.parc ? "Sim" : "Não",
+      ...(dias.length > 1 ? [fDc(p.d)] : []), ...(selEmp.size > 1 ? [p.emp] : []), String(p.nota), String(p.top), p.h.slice(0, 5), p.parc ? "Sim" : "Não",
       etqGrupo(SIT[p.sit][0], SIT[p.sit][1]), `${fN(p.np)} de ${fN(p.n)}`, fR2(p.vp), p.lib ? fR2(p.lib) : "",
       ORDEM.filter(s => p.st[s]).map(s => `${p.st[s]} ${s === "SC" ? "SC" : nomeSt(s).toLowerCase()}`).join(" · ")]),
     "Nenhum pedido com pendência para este filtro.");
@@ -511,7 +539,7 @@ function desenharItens(){
     v => { filtroSt = v; desenharItens(); });
   const termo = $("busca").value.trim().toUpperCase();
   tabela($("itens"),
-    [...(dias.length > 1 ? [{t:"Data"}] : []), {t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Qtd.", n:1}, {t:"Estoque", n:1}, {t:"Valor", n:1}, {t:"Observação"}],
+    [...(dias.length > 1 ? [{t:"Data"}] : []), ...(selEmp.size > 1 ? [{t:"Empresa"}] : []), {t:"Referência"}, {t:"Cód. produto", n:1}, {t:"Status"}, {t:"Pedido", n:1}, {t:"Fatura parcial"}, {t:"Qtd.", n:1}, {t:"Estoque", n:1}, {t:"Valor", n:1}, {t:"Observação"}],
     pend.filter(i => !filtroSt || i.st === filtroSt)
         .filter(i => !termo || (i.ref + " " + i.cod + " " + i.nota).toUpperCase().includes(termo))
         .sort((a, b) => b.v - a.v)
@@ -520,7 +548,7 @@ function desenharItens(){
           const obs = g === "e" && visao.disputa.has(chave(i)) ? el("span", {class:"etq forte"}, "Estoque disputado")
                     : i.e < 0 ? el("span", {class:"etq forte"}, "Estoque negativo")
                     : g === "f" && i.e > 0 ? el("span", {class:"etq"}, `Atende ${fN(i.e)} de ${fN(i.q)}`) : "";
-          return [...(dias.length > 1 ? [fDc(i.d)] : []), i.ref, String(i.cod), etqGrupo(g, nomeSt(i.st)), String(i.nota), i.parc ? "Sim" : "Não", fN(i.q), fN(i.e), fR2(i.v), obs];
+          return [...(dias.length > 1 ? [fDc(i.d)] : []), ...(selEmp.size > 1 ? [i.emp] : []), i.ref, String(i.cod), etqGrupo(g, nomeSt(i.st)), String(i.nota), i.parc ? "Sim" : "Não", fN(i.q), fN(i.e), fR2(i.v), obs];
         }),
     "Nenhum item pendente para este filtro.");
 }
@@ -537,6 +565,43 @@ async function carregar(dia){
     cache[dia] = await r.json();
   }
   return cache[dia];
+}
+
+/* ---------- empresas ---------- */
+const CHAVES = ["itens", "pedidos", "valor", "itens_pend", "pedidos_pend", "valor_pend", "valor_estoque", "valor_falta"];
+const empOk = i => selEmp.has(i.emp);
+const todasEmp = () => EMPRESAS.every(e => selEmp.has(e));
+const rotEmp = () => todasEmp() ? (EMPRESAS.length > 1 ? "Todas as empresas" : (EMPRESAS[0] || "")) : EMPRESAS.filter(e => selEmp.has(e)).join(" + ");
+/* totais de um dia do resumo somando apenas as empresas selecionadas */
+function rf(d){
+  if (!d.emp || todasEmp()) return d;
+  const t = {data:d.data};
+  CHAVES.forEach(k => t[k] = soma(EMPRESAS.filter(e => selEmp.has(e)), e => (d.emp[e] || {})[k] || 0));
+  return t;
+}
+function salvarEmp(){
+  try{ localStorage.setItem("painel-empresas", JSON.stringify([...selEmp])); }catch(e){}
+}
+function desenharEmpresas(){
+  const alvo = limpar($("empresas"));
+  if (EMPRESAS.length < 2) return;
+  const todas = el("button", {"aria-pressed": String(todasEmp())}, "Todas");
+  todas.addEventListener("click", () => { selEmp = new Set(EMPRESAS); aoMudarEmp(); });
+  alvo.append(todas);
+  EMPRESAS.forEach(e => {
+    const b = el("button", {"aria-pressed": String(!todasEmp() && selEmp.has(e)), title:"Clique para incluir ou retirar"}, e);
+    b.addEventListener("click", () => {
+      if (todasEmp()) selEmp = new Set([e]);            /* de "Todas" para uma empresa */
+      else if (selEmp.has(e)) selEmp.delete(e); else selEmp.add(e);
+      if (!selEmp.size) selEmp = new Set(EMPRESAS);     /* nada marcado = todas */
+      aoMudarEmp();
+    });
+    alvo.append(b);
+  });
+}
+function aoMudarEmp(){
+  salvarEmp(); desenharEmpresas();
+  if (dados && dias.length){ filtroSt = ""; filtroPed = ""; desenhar(); }
 }
 
 const maisDias = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
@@ -597,6 +662,16 @@ async function iniciar(){
     return aviso("Ainda não há nenhum arquivo de separação no layout novo (com estoque e status). O painel aparece assim que o primeiro arquivo chegar.");
   }
   const ultimo = ultimoDia();
+  const ORDEM_EMP = ["GHPC", "G-MOTION", "KPT"];
+  EMPRESAS = [...new Set(resumo.flatMap(d => Object.keys(d.emp || {})))]
+    .sort((a, b) => ((ORDEM_EMP.indexOf(a) + 1) || 99) - ((ORDEM_EMP.indexOf(b) + 1) || 99) || a.localeCompare(b));
+  let guardadas = null;
+  const qEmp = new URLSearchParams(location.search).get("emp");
+  if (qEmp) guardadas = qEmp.toUpperCase().split(",");
+  else { try{ guardadas = JSON.parse(localStorage.getItem("painel-empresas") || "null"); }catch(e){} }
+  selEmp = new Set((guardadas || []).filter(e => EMPRESAS.includes(e)));
+  if (!selEmp.size) selEmp = new Set(EMPRESAS);
+  desenharEmpresas();
   ["de", "ate"].forEach(id => {
     $(id).min = resumo[0].data; $(id).max = ultimo;
     $(id).addEventListener("change", () => { if ($("de").value && $("ate").value) definir($("de").value, $("ate").value); });
