@@ -8,8 +8,9 @@ Lê TODOS os arquivos de dados/xlsx (o historico completo) e regenera:
 As colunas sao lidas pela POSICAO, na ordem do relatorio do ERP:
   0 data/hora impressao | 1 data | 2 CODTIPOPER | 3 NUNOTA | 4 fatura parcial
   5 CODPROD | 6 REFERENCIA | 7 QTDNEG | 8 QTDESTOQUE | 9 valor de venda do item
-  10 PENDENTE | 11 STATUS
+  10 PENDENTE | 11 STATUS | 12 EMPRESA
 
+Arquivos sem a coluna EMPRESA (12 colunas) entram como empresa "NÃO INFORMADA".
 Arquivos no layout antigo (10 colunas, sem estoque/status) sao ignorados com aviso.
 """
 import datetime as dt
@@ -25,7 +26,8 @@ DIR_XLSX = RAIZ / "dados" / "xlsx"
 DIR_JSON = RAIZ / "dados" / "json"
 RESUMO = RAIZ / "dados" / "resumo.json"
 JANELA_REINCIDENCIA = 30  # dias
-N_COLUNAS = 12
+N_COLUNAS = 12          # minimo (layout sem EMPRESA)
+SEM_EMPRESA = "NÃO INFORMADA"
 SEM_ESTOQUE = {"FABRICADO", "SC"}
 COM_ESTOQUE = {"FORA DO PRAZO", "AGUARDANDO OUTROS ITENS"}
 
@@ -103,6 +105,7 @@ def ler_xlsx(caminho):
             "v": _numero(lin[9], 2),
             "pend": pend,
             "st": status,
+            "emp": (" ".join(str(lin[12] or "").upper().split()) if len(lin) > 12 else "") or SEM_EMPRESA,
         })
     return itens, antigas
 
@@ -141,18 +144,21 @@ def main():
         (DIR_JSON / f"{dia}.json").write_text(
             json.dumps(saida, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
-        pend = [i for i in itens if i["pend"]]
-        resumo.append({
-            "data": dia,
-            "itens": len(itens),
-            "pedidos": len({i["nota"] for i in itens}),
-            "valor": round(sum(i["v"] for i in itens), 2),
-            "itens_pend": len(pend),
-            "pedidos_pend": len({i["nota"] for i in pend}),
-            "valor_pend": round(sum(i["v"] for i in pend), 2),
-            "valor_estoque": round(sum(i["v"] for i in pend if grupo(i) == "e"), 2),
-            "valor_falta": round(sum(i["v"] for i in pend if grupo(i) == "f"), 2),
-        })
+        def totais(lista):
+            pend = [i for i in lista if i["pend"]]
+            return {
+                "itens": len(lista),
+                "pedidos": len({i["nota"] for i in lista}),
+                "valor": round(sum(i["v"] for i in lista), 2),
+                "itens_pend": len(pend),
+                "pedidos_pend": len({i["nota"] for i in pend}),
+                "valor_pend": round(sum(i["v"] for i in pend), 2),
+                "valor_estoque": round(sum(i["v"] for i in pend if grupo(i) == "e"), 2),
+                "valor_falta": round(sum(i["v"] for i in pend if grupo(i) == "f"), 2),
+            }
+        empresas = sorted({i["emp"] for i in itens})
+        resumo.append({"data": dia, **totais(itens),
+                       "emp": {e: totais([i for i in itens if i["emp"] == e]) for e in empresas}})
 
     for antigo in DIR_JSON.glob("*.json"):  # remove dias que nao existem mais nos XLSX
         if antigo.stem not in por_dia:
